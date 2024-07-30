@@ -3,7 +3,7 @@ Detection::Detection(){
 
 }
 
-Detection::Detection(const cv::Rect& roi, const cv::Mat& mask, const size_t& id): roi_(roi), mask_(mask), id_(id){
+Detection::Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name): roi_(roi), mask_(mask), name_(name){
 
 }
 
@@ -19,40 +19,31 @@ cv::Mat Detection::getMask() const{
     return mask_;
 }
 
-size_t Detection::getClassID() const{
-    return id_;
+string Detection::getClassName() const{
+    return name_;
 }
 
 OCRDetection::OCRDetection(){
     
 }
 
-OCRDetection::OCRDetection(const cv::Rect& roi, const size_t& id){
+OCRDetection::OCRDetection(const cv::Rect& roi, const string& content){
     roi_ = roi;
-    id_ = id;
+    name_ = content;
 }
 
 Object::Object(){
 
 }
 
-Object::Object(const size_t& id): id_(id){
+Object::Object(const string& name, int room_number): name_(name), room_number_(room_number){
 
 }
 
-size_t Object::getClassID() const{
-    return id_;
-}
-
-
-Door::Door(){
-    id_ = 5000;
-}
-
-Door::Door(size_t room_number, const Eigen::Matrix4d& pose): room_number_(room_number), pose_(pose){
-    id_ = 5000;
-}
-
-size_t Door::getNumber() const{
+int Object::getRoomNumber() const{
     return room_number_;
+}
+
+string Object::getClassName() const{
+    return name_;
 }

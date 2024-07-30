@@ -5,15 +5,17 @@
 #include <opencv2/features2d.hpp>
 #include <opencv2/opencv.hpp>
 #include <Eigen/Core>
+using namespace std;
+
 class Detection{
     protected:
         cv::Rect roi_;
         cv::Mat mask_;
-        size_t id_;
+        string name_;
     public: 
         Detection();
 
-        Detection(const cv::Rect& roi, const cv::Mat& mask, const size_t& id);
+        Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name);
 
         ~Detection();   
 
@@ -21,7 +23,7 @@ class Detection{
 
         cv::Mat getMask() const;
 
-        size_t getClassID() const;
+        string getClassName() const;
 };
 
 
@@ -29,30 +31,24 @@ class OCRDetection: public Detection{
     public:
         OCRDetection();
 
-        OCRDetection(const cv::Rect& roi, const size_t& id);
+        OCRDetection(const cv::Rect& roi, const string& content);
 };
 
 class Object{
     protected:
-        size_t id_;
+        string name_;
+
+        int room_number_;
     public:
         Object();
 
-        Object(const size_t& id);
+        Object(const string& name, int room_number = -1);
 
-        size_t getClassID() const;
+        string getClassName() const;
+
+        int getRoomNumber() const;
 };
 
-class Door: public Object{
-    private:
-        size_t room_number_;
-        Eigen::Matrix4d pose_;
-    public:
-        Door();
 
-        Door(size_t room_number, const Eigen::Matrix4d& pose);
-
-        size_t getNumber() const;
-};
 
 #endif
