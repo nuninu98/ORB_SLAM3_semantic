@@ -55,7 +55,8 @@ class Settings;
 
 class Tracking
 {  
-
+private:
+    int floor_;
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Atlas* pAtlas,
@@ -175,6 +176,7 @@ public:
     vector<MapPoint*> GetLocalMapMPS();
 
     bool mbWriteStats;
+    void setFloor(int val);
 
 #ifdef REGISTER_TIMES
     void LocalMapStats2File();

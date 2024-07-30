@@ -192,6 +192,8 @@ class KeyFrame
         ar & mbHasVelocity;
     }
 
+    int floor_ = -1;
+
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     KeyFrame();
@@ -302,6 +304,10 @@ public:
 
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
     void SetKeyFrameDatabase(KeyFrameDatabase* pKFDB);
+
+    void setFloor(int val);
+
+    int getFloor() const;
 
     bool bImu;
 

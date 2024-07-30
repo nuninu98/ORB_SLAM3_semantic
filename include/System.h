@@ -83,6 +83,8 @@ class Settings;
 
 class System
 {
+private:
+    //double last_floor_updated_ = 0.0;
 public:
     // Input sensor
     enum eSensor{

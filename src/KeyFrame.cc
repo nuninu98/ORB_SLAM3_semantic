@@ -1156,4 +1156,12 @@ void KeyFrame::SetKeyFrameDatabase(KeyFrameDatabase* pKFDB)
     mpKeyFrameDB = pKFDB;
 }
 
+void KeyFrame::setFloor(int val){
+    floor_ = val;
+}
+
+int KeyFrame::getFloor() const{
+    return floor_;
+}
+
 } //namespace ORB_SLAM

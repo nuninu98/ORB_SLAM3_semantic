@@ -400,6 +400,7 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
     for(auto& elem : detections){
         if(elem.getClassName() == "room_number"){
             int floor = (elem.getRoomNumber() % 1000) / 100;
+            mpTracker->setFloor(floor);
         }
     }
     if(mSensor!=RGBD  && mSensor!=IMU_RGBD)

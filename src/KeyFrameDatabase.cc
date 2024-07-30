@@ -714,7 +714,7 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
 
         if(!spAlreadyAddedKF.count(pKFi))
         {
-            if(pKF->GetMap() == pKFi->GetMap() && vpLoopCand.size() < nNumCandidates)
+            if(pKF->GetMap() == pKFi->GetMap() && vpLoopCand.size() < nNumCandidates && (pKF->getFloor() ==pKFi->getFloor()))
             {
                 vpLoopCand.push_back(pKFi);
             }
