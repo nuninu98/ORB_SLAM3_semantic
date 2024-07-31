@@ -1621,5 +1621,14 @@ string System::CalculateCheckSum(string filename, int type)
     return checksum;
 }
 
+void System::registerKeyframeCall(bool* flag, condition_variable* cv){
+    mpTracker->registerKeyframeCall(flag, cv);
+}
+
+vector<KeyFrame*> System::getKeyframes(){
+    vector<KeyFrame*> output = mpAtlas->GetAllKeyFrames();
+    return output;
+}
+
 } //namespace ORB_SLAM
 

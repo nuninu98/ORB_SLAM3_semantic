@@ -27,6 +27,7 @@
 #include<string>
 #include<thread>
 #include<opencv2/core/core.hpp>
+#include <condition_variable>
 
 #include "Tracking.h"
 #include "FrameDrawer.h"
@@ -191,6 +192,9 @@ public:
 
     float GetImageScale();
 
+    void registerKeyframeCall(bool* flag, condition_variable* cv);
+
+    vector<KeyFrame*> getKeyframes();
 #ifdef REGISTER_TIMES
     void InsertRectTime(double& time);
     void InsertResizeTime(double& time);
