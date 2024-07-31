@@ -3,7 +3,7 @@ Detection::Detection(){
 
 }
 
-Detection::Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name): roi_(roi), mask_(mask), name_(name){
+Detection::Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content): roi_(roi), mask_(mask), name_(name), content_(content){
 
 }
 
@@ -23,13 +23,30 @@ string Detection::getClassName() const{
     return name_;
 }
 
+string Detection::getContent() const{
+    return content_;
+}
+
+void Detection::copyContent(const OCRDetection& ocr_output){
+    content_ = ocr_output.getContent();
+}
+
 OCRDetection::OCRDetection(){
     
 }
 
-OCRDetection::OCRDetection(const cv::Rect& roi, const string& content){
-    roi_ = roi;
-    name_ = content;
+OCRDetection::OCRDetection(const cv::Rect& roi, const string& content): roi_(roi){
+    
+    content_ = content;
+}
+
+
+string OCRDetection::getContent() const{
+    return content_;
+}
+
+cv::Rect OCRDetection::getRoI() const{
+    return roi_;
 }
 
 Object::Object(){

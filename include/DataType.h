@@ -7,15 +7,31 @@
 #include <Eigen/Core>
 using namespace std;
 
+class OCRDetection{
+    private:
+        string content_;
+
+        cv::Rect roi_;
+    public:
+        OCRDetection();
+
+        OCRDetection(const cv::Rect& roi, const string& content);
+
+        string getContent() const;
+
+        cv::Rect getRoI() const;
+};
+
 class Detection{
     protected:
         cv::Rect roi_;
         cv::Mat mask_;
         string name_;
+        string content_;
     public: 
         Detection();
 
-        Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name);
+        Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content = "");
 
         ~Detection();   
 
@@ -24,15 +40,14 @@ class Detection{
         cv::Mat getMask() const;
 
         string getClassName() const;
+
+        string getContent() const; // only for room number
+
+        void copyContent(const OCRDetection& ocr_output);
 };
 
 
-class OCRDetection: public Detection{
-    public:
-        OCRDetection();
 
-        OCRDetection(const cv::Rect& roi, const string& content);
-};
 
 class Object{
     protected:

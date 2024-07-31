@@ -396,19 +396,19 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
     return Tcw;
 }
 
-Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, vector<Object>& detections, const vector<IMU::Point>& vImuMeas, string filename){
-    for(auto& elem : detections){
-        if(elem.getClassName() == "room_number"){
-            int floor = (elem.getRoomNumber() % 1000) / 100;
-            mpTracker->setFloor(floor);
-        }
-    }
+Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, vector<Detection>& detections, const vector<IMU::Point>& vImuMeas, string filename){
+    
     if(mSensor!=RGBD  && mSensor!=IMU_RGBD)
     {
         cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
         exit(-1);
     }
-
+    for(auto& elem : detections){
+        if(elem.getClassName() == "room_number"){
+            int floor = (stoi(elem.getContent()) % 1000) / 100;
+            mpTracker->setFloor(floor);
+        }
+    }
     cv::Mat imToFeed = im.clone();
     cv::Mat imDepthToFeed = depthmap.clone();
     if(settings_ && settings_->needToResize()){
