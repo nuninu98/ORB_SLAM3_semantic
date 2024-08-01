@@ -15,11 +15,15 @@ class OCRDetection{
     public:
         OCRDetection();
 
+        OCRDetection(const OCRDetection& ocr);
+
         OCRDetection(const cv::Rect& roi, const string& content);
 
         string getContent() const;
 
         cv::Rect getRoI() const;
+
+        OCRDetection& operator=(const OCRDetection& ocr);
 };
 
 class Detection{

@@ -31,8 +31,14 @@ void Detection::copyContent(const OCRDetection& ocr_output){
     content_ = ocr_output.getContent();
 }
 
+//=====================OCR DETECTION======================
 OCRDetection::OCRDetection(){
     
+}
+
+OCRDetection::OCRDetection(const OCRDetection& ocr){
+    content_ = ocr.content_;
+    roi_ = ocr.roi_;
 }
 
 OCRDetection::OCRDetection(const cv::Rect& roi, const string& content): roi_(roi){
@@ -48,6 +54,13 @@ string OCRDetection::getContent() const{
 cv::Rect OCRDetection::getRoI() const{
     return roi_;
 }
+
+OCRDetection& OCRDetection::operator=(const OCRDetection& ocr){
+    content_ = ocr.content_;
+    roi_ = ocr.roi_;
+    return *this;
+}
+//======================OBJECT==============================
 
 Object::Object(){
 
