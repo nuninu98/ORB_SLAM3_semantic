@@ -1164,4 +1164,8 @@ int KeyFrame::getFloor() const{
     return floor_;
 }
 
+void KeyFrame::setDetection(const vector<Detection>& dets){
+    detections_ = dets;
+}
+
 } //namespace ORB_SLAM

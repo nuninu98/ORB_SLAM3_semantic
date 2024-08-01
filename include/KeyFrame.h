@@ -31,6 +31,7 @@
 
 #include "GeometricCamera.h"
 #include "SerializationUtils.h"
+#include "DataType.h"
 
 #include <mutex>
 
@@ -193,6 +194,7 @@ class KeyFrame
     }
 
     int floor_ = -1;
+    vector<Detection> detections_;
 
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -308,6 +310,8 @@ public:
     void setFloor(int val);
 
     int getFloor() const;
+
+    void setDetection(const vector<Detection>& dets);
 
     bool bImu;
 

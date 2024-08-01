@@ -26,12 +26,26 @@ class OCRDetection{
         OCRDetection& operator=(const OCRDetection& ocr);
 };
 
+class Object{
+    protected:
+        string name_;
+        Eigen::Matrix4f pose_;
+    public:
+        Object();
+
+        Object(const string& name, const Eigen::Matrix4f& pose);
+
+        string getClassName() const;
+
+};
+
 class Detection{
     protected:
         cv::Rect roi_;
         cv::Mat mask_;
         string name_;
         string content_;
+        Object* object_;
     public: 
         Detection();
 
@@ -48,25 +62,14 @@ class Detection{
         string getContent() const; // only for room number
 
         void copyContent(const OCRDetection& ocr_output);
+
+        void setCorrespondence(Object* obj);
 };
 
 
 
 
-class Object{
-    protected:
-        string name_;
 
-        int room_number_;
-    public:
-        Object();
-
-        Object(const string& name, int room_number = -1);
-
-        string getClassName() const;
-
-        int getRoomNumber() const;
-};
 
 
 

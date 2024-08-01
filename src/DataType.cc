@@ -1,9 +1,9 @@
 #include "DataType.h"
-Detection::Detection(){
+Detection::Detection(): object_(nullptr){
 
 }
 
-Detection::Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content): roi_(roi), mask_(mask), name_(name), content_(content){
+Detection::Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content): roi_(roi), mask_(mask), name_(name), content_(content), object_(nullptr){
 
 }
 
@@ -29,6 +29,10 @@ string Detection::getContent() const{
 
 void Detection::copyContent(const OCRDetection& ocr_output){
     content_ = ocr_output.getContent();
+}
+
+void Detection::setCorrespondence(Object* obj){
+    object_ = obj;
 }
 
 //=====================OCR DETECTION======================
@@ -66,12 +70,8 @@ Object::Object(){
 
 }
 
-Object::Object(const string& name, int room_number): name_(name), room_number_(room_number){
+Object::Object(const string& name, const Eigen::Matrix4f& pose): name_(name), pose_(pose){
 
-}
-
-int Object::getRoomNumber() const{
-    return room_number_;
 }
 
 string Object::getClassName() const{
