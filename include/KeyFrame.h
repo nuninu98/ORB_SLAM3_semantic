@@ -313,6 +313,8 @@ public:
 
     void setDetection(const vector<Detection>& dets);
 
+    void getDetection(vector<Detection>& output) const;
+
     bool bImu;
 
     // The following variables are accesed from only 1 thread or never change (no mutex needed).

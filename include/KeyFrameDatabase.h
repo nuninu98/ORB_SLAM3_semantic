@@ -28,6 +28,7 @@
 #include "Frame.h"
 #include "ORBVocabulary.h"
 #include "Map.h"
+#include "DataType.h"
 
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
@@ -54,6 +55,7 @@ class KeyFrameDatabase
         ar & mvBackupInvertedFileId;
     }
 
+    set<Object*> map_objects_;
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -82,6 +84,7 @@ public:
     void PostLoad(map<long unsigned int, KeyFrame*> mpKFid);
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
 
+    void storeObject(Object* obj);
 protected:
 
    // Associated vocabulary

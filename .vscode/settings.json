@@ -2,6 +2,7 @@
     "files.associations": {
         "*.ipp": "cpp",
         "thread": "cpp",
-        "condition_variable": "cpp"
+        "condition_variable": "cpp",
+        "vector": "cpp"
     }
 }

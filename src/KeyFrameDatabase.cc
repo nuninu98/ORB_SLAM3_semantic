@@ -854,4 +854,8 @@ void KeyFrameDatabase::SetORBVocabulary(ORBVocabulary* pORBVoc)
     mvInvertedFile.resize(mpVoc->size());
 }
 
+void KeyFrameDatabase::storeObject(Object* obj){
+    map_objects_.insert(obj);
+}
+
 } //namespace ORB_SLAM

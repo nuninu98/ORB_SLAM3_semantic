@@ -64,6 +64,8 @@ class Detection{
         void copyContent(const OCRDetection& ocr_output);
 
         void setCorrespondence(Object* obj);
+
+        Object* getObject() const;
 };
 
 

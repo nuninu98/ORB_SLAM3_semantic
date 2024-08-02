@@ -1563,6 +1563,50 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
     return mCurrentFrame.GetPose();
 }
 
+Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, const vector<Detection>& detections, string filename){
+    mImGray = imRGB;
+    cv::Mat imDepth = imD;
+
+    if(mImGray.channels()==3)
+    {
+        if(mbRGB)
+            cvtColor(mImGray,mImGray,cv::COLOR_RGB2GRAY);
+        else
+            cvtColor(mImGray,mImGray,cv::COLOR_BGR2GRAY);
+    }
+    else if(mImGray.channels()==4)
+    {
+        if(mbRGB)
+            cvtColor(mImGray,mImGray,cv::COLOR_RGBA2GRAY);
+        else
+            cvtColor(mImGray,mImGray,cv::COLOR_BGRA2GRAY);
+    }
+
+    if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
+        imDepth.convertTo(imDepth,CV_32F,mDepthMapFactor);
+
+    if (mSensor == System::RGBD)
+        mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
+    else if(mSensor == System::IMU_RGBD)
+        mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);
+
+
+
+
+
+
+    mCurrentFrame.mNameFile = filename;
+    mCurrentFrame.mnDataset = mnNumDataset;
+
+#ifdef REGISTER_TIMES
+    vdORBExtract_ms.push_back(mCurrentFrame.mTimeORB_Ext);
+#endif
+
+    Track(detections);
+
+    return mCurrentFrame.GetPose();
+}
+
 
 Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename)
 {
@@ -1792,7 +1836,9 @@ void Tracking::ResetFrameIMU()
 }
 
 
-void Tracking::Track()
+
+
+void Tracking::Track(const vector<Detection>& detections)
 {
 
     if (bStepByStep)
@@ -1801,6 +1847,16 @@ void Tracking::Track()
         while(!mbStep && bStepByStep)
             usleep(500);
         mbStep = false;
+    }
+
+    for(auto& elem : detections){
+        if(elem.getClassName() == "room_number"){
+            int floor = (stoi(elem.getContent()) % 1000) / 100;
+            if(floor_ != floor){
+                cout<<"SET FLOOR "<<floor <<" from "<<floor_<<endl;
+            }
+            floor_ = floor;
+        }
     }
 
     if(mpLocalMapper->mbBadImu)
@@ -2248,7 +2304,7 @@ void Tracking::Track()
             // if(bNeedKF && bOK)
             if(bNeedKF && (bOK || (mInsertKFsLost && mState==RECENTLY_LOST &&
                                    (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD))))
-                CreateNewKeyFrame();
+                CreateNewKeyFrame(detections);
 
 #ifdef REGISTER_TIMES
             std::chrono::steady_clock::time_point time_EndNewKF = std::chrono::steady_clock::now();
@@ -3214,7 +3270,7 @@ bool Tracking::NeedNewKeyFrame()
         return false;
 }
 
-void Tracking::CreateNewKeyFrame()
+void Tracking::CreateNewKeyFrame(const vector<Detection>& detections)
 {
     if(mpLocalMapper->IsInitializing() && !mpAtlas->isImuInitialized())
         return;
@@ -3223,7 +3279,7 @@ void Tracking::CreateNewKeyFrame()
         return;
 
     KeyFrame* pKF = new KeyFrame(mCurrentFrame,mpAtlas->GetCurrentMap(),mpKeyFrameDB);
-    pKF->setFloor(floor_);
+    
     if(mpAtlas->isImuInitialized()) //  || mpLocalMapper->IsInitializing())
         pKF->bImu = true;
 
@@ -3239,6 +3295,8 @@ void Tracking::CreateNewKeyFrame()
     else
         Verbose::PrintMess("No last KF in KF creation!!", Verbose::VERBOSITY_NORMAL);
 
+    pKF->setFloor(floor_);
+    pKF->setDetection(detections);
     // Reset preintegration from last KF (Create new object)
     if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
     {
@@ -4129,13 +4187,6 @@ void Tracking::Release()
 }
 #endif
 
-void Tracking::setFloor(int val){
-    if(floor_ != val){
-        cout<<"Switch Floor from "<<floor_<<" to "<<val<<endl;
-    }
-    floor_ = val;
-    
-}
 
 void Tracking::registerKeyframeCall(bool* flag, condition_variable* cv){
     kf_flag_ = flag;

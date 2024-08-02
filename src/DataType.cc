@@ -35,6 +35,11 @@ void Detection::setCorrespondence(Object* obj){
     object_ = obj;
 }
 
+Object* Detection::getObject() const{
+    return object_;
+}
+
+
 //=====================OCR DETECTION======================
 OCRDetection::OCRDetection(){
     
@@ -77,3 +82,4 @@ Object::Object(const string& name, const Eigen::Matrix4f& pose): name_(name), po
 string Object::getClassName() const{
     return name_;
 }
+

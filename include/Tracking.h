@@ -56,9 +56,10 @@ class Settings;
 class Tracking
 {  
 private:
-    int floor_;
+    int floor_ = -1;
     bool* kf_flag_;
     condition_variable* kf_cv_;
+
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Atlas* pAtlas,
@@ -74,6 +75,8 @@ public:
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
     Sophus::SE3f GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp, string filename);
     Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, string filename);
+
+    Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, const vector<Detection>& detections, string filename);
     Sophus::SE3f GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename);
 
     void GrabImuData(const IMU::Point &imuMeasurement);
@@ -180,8 +183,7 @@ public:
     vector<MapPoint*> GetLocalMapMPS();
 
     bool mbWriteStats;
-    void setFloor(int val);
-
+    
 #ifdef REGISTER_TIMES
     void LocalMapStats2File();
     void TrackStats2File();
@@ -201,7 +203,9 @@ public:
 protected:
 
     // Main tracking function. It is independent of the input sensor.
-    void Track();
+    //void Track();
+
+    void Track(const vector<Detection>& detections = vector<Detection>());
 
     // Map initialization for stereo and RGB-D
     void StereoInitialization();
@@ -227,7 +231,7 @@ protected:
     void SearchLocalPoints();
 
     bool NeedNewKeyFrame();
-    void CreateNewKeyFrame();
+    void CreateNewKeyFrame(const vector<Detection>& detections= vector<Detection>());
 
     // Perform preintegration from last frame
     void PreintegrateIMU();
