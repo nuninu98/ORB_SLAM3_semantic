@@ -5,8 +5,8 @@
 #include <opencv2/features2d.hpp>
 #include <opencv2/opencv.hpp>
 #include <Eigen/Core>
+#include <Eigen/Dense>
 using namespace std;
-
 class OCRDetection{
     private:
         string content_;
@@ -27,7 +27,7 @@ class OCRDetection{
 };
 
 class Object{
-    protected:
+    private:
         string name_;
         Eigen::Matrix4f pose_;
     public:
@@ -40,13 +40,9 @@ class Object{
 };
 
 class Detection{
-    protected:
-        cv::Rect roi_;
-        cv::Mat mask_;
-        string name_;
-        string content_;
-        Object* object_;
+    
     public: 
+
         Detection();
 
         Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content = "");
@@ -65,7 +61,18 @@ class Detection{
 
         void setCorrespondence(Object* obj);
 
+        void setSensorPose(const Eigen::Matrix4f& sensor_pose);
+
         Object* getObject() const;
+        Eigen::Matrix4f sensor_pose_;
+
+    private:
+        
+        cv::Rect roi_;
+        cv::Mat mask_;
+        string name_;
+        string content_;
+        Object* object_;
 };
 
 

@@ -1,9 +1,9 @@
 #include "DataType.h"
-Detection::Detection(): object_(nullptr){
+Detection::Detection(): object_(nullptr), sensor_pose_(Eigen::Matrix4f::Identity()){
 
 }
 
-Detection::Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content): roi_(roi), mask_(mask), name_(name), content_(content), object_(nullptr){
+Detection::Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content): roi_(roi), mask_(mask), name_(name), content_(content), object_(nullptr), sensor_pose_(Eigen::Matrix4f::Identity()){
 
 }
 
@@ -34,6 +34,11 @@ void Detection::copyContent(const OCRDetection& ocr_output){
 void Detection::setCorrespondence(Object* obj){
     object_ = obj;
 }
+
+void Detection::setSensorPose(const Eigen::Matrix4f& sensor_pose){
+    sensor_pose_ = sensor_pose; // error
+}
+
 
 Object* Detection::getObject() const{
     return object_;
