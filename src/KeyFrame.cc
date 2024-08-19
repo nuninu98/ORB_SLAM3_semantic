@@ -1164,7 +1164,7 @@ int KeyFrame::getFloor() const{
     return floor_;
 }
 
-void KeyFrame::setDetection(const vector<Detection>& dets){
+void KeyFrame::setDetection(const vector<DetectionGroup>& dets){
     //cout<<"DETS: "<<dets.size()<<endl;
     detections_ = dets;
     // if(mPrevKF != NULL){ // generate or connect to the object
@@ -1206,7 +1206,7 @@ void KeyFrame::setDetection(const vector<Detection>& dets){
     // }
 }
 
-void KeyFrame::getDetection(vector<Detection>& output) const{
+void KeyFrame::getDetection(vector<DetectionGroup>& output) const{
     output.clear();
     output = detections_;
 }

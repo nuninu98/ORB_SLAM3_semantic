@@ -1563,7 +1563,7 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
     return mCurrentFrame.GetPose();
 }
 
-Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, const vector<Detection>& detections, string filename){
+Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, const vector<DetectionGroup>& detections, string filename){
     mImGray = imRGB;
     cv::Mat imDepth = imD;
 
@@ -1838,7 +1838,7 @@ void Tracking::ResetFrameIMU()
 
 
 
-void Tracking::Track(const vector<Detection>& detections)
+void Tracking::Track(const vector<DetectionGroup>& detections)
 {
 
     if (bStepByStep)
@@ -1850,13 +1850,18 @@ void Tracking::Track(const vector<Detection>& detections)
     }
 
     for(auto& elem : detections){
-        if(elem.getClassName() == "room_number"){
-            int floor = (stoi(elem.getContent()) % 1000) / 100;
-            if(floor_ != floor){
-                cout<<"SET FLOOR "<<floor <<" from "<<floor_<<endl;
+        vector<Detection> dets;
+        elem.detections(dets);
+        for(const auto& d : dets){
+            if(d.getClassName() == "room_number"){
+                int floor = (stoi(d.getContent()) % 1000) / 100;
+                if(floor_ != floor){
+                    cout<<"SET FLOOR "<<floor <<" from "<<floor_<<endl;
+                }
+                floor_ = floor;
             }
-            floor_ = floor;
         }
+        
     }
 
     if(mpLocalMapper->mbBadImu)
@@ -3270,7 +3275,7 @@ bool Tracking::NeedNewKeyFrame()
         return false;
 }
 
-void Tracking::CreateNewKeyFrame(const vector<Detection>& detections)
+void Tracking::CreateNewKeyFrame(const vector<DetectionGroup>& detections)
 {
     if(mpLocalMapper->IsInitializing() && !mpAtlas->isImuInitialized())
         return;
@@ -3295,8 +3300,11 @@ void Tracking::CreateNewKeyFrame(const vector<Detection>& detections)
     else
         Verbose::PrintMess("No last KF in KF creation!!", Verbose::VERBOSITY_NORMAL);
 
+    //========== Add Hierarchy Graph====================
     pKF->setFloor(floor_);
     pKF->setDetection(detections);
+    //==================================================
+
     // Reset preintegration from last KF (Create new object)
     if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
     {

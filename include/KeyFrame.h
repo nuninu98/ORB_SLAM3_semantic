@@ -194,7 +194,7 @@ class KeyFrame
     }
 
     int floor_ = -1;
-    vector<Detection> detections_;
+    vector<DetectionGroup> detections_;
 
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -311,9 +311,9 @@ public:
 
     int getFloor() const;
 
-    void setDetection(const vector<Detection>& dets);
+    void setDetection(const vector<DetectionGroup>& dets);
 
-    void getDetection(vector<Detection>& output) const;
+    void getDetection(vector<DetectionGroup>& output) const;
 
     bool bImu;
 

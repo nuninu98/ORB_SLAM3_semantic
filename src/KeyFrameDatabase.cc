@@ -42,6 +42,48 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
 
     for(DBoW2::BowVector::const_iterator vit= pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit!=vend; vit++)
         mvInvertedFile[vit->first].push_back(pKF);
+    //==============Add hierarchy graph============
+    Eigen::Matrix3f K = Eigen::Matrix3f::Identity();
+    K(0, 0) = pKF->fx;
+    K(0, 2) = pKF->cx;
+    K(1, 1) = pKF->fy;
+    K(1, 2) = pKF->cy;
+
+    if(h_graph_.find(pKF->getFloor()) == h_graph_.end()){
+        h_graph_.insert(make_pair(pKF->getFloor(), vector<Object*>()));
+    }
+    vector<Object*> tgt_objs = h_graph_[pKF->getFloor()];
+    vector<DetectionGroup> kf_dets;
+    pKF->getDetection(kf_dets);
+    for(const auto& dg : kf_dets){
+        double max_iou = 0.2;
+        int idx = -1;
+        for(int i = 0; i < tgt_objs.size(); ++i){
+            cv::Rect box_est;
+            Eigen::Matrix4f cam_in_map = pKF->GetPoseInverse().matrix()* dg.getSensorPose();
+            tgt_objs[i]->getEstBbox(K, cam_in_map, box_est);
+            vector<Detection> detections;
+            dg.detections(detections);
+            for(const auto& det : detections){
+                if(det.getClassName() == tgt_objs[i]->getClassName()){
+                    cv::Rect common = box_est & det.getRoI();
+                    double iou = ((double)common.area())/(double)(det.getRoI().area() + box_est.area() - common.area());
+                    if(iou > max_iou){
+                        max_iou = iou;
+                        idx = i;
+                    }
+                }
+            }
+            
+        }
+        if(idx != -1){ // matched
+
+        }
+        else{ //initialize
+
+        }
+    }
+    //=============================================
 }
 
 void KeyFrameDatabase::erase(KeyFrame* pKF)
@@ -854,8 +896,5 @@ void KeyFrameDatabase::SetORBVocabulary(ORBVocabulary* pORBVoc)
     mvInvertedFile.resize(mpVoc->size());
 }
 
-void KeyFrameDatabase::storeObject(Object* obj){
-    map_objects_.insert(obj);
-}
 
 } //namespace ORB_SLAM

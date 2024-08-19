@@ -35,6 +35,7 @@
 #include <boost/serialization/list.hpp>
 
 #include<mutex>
+#include <unordered_map>
 
 
 namespace ORB_SLAM3
@@ -55,7 +56,7 @@ class KeyFrameDatabase
         ar & mvBackupInvertedFileId;
     }
 
-    set<Object*> map_objects_;
+    unordered_map<int, vector<Object*>> h_graph_;
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -84,7 +85,7 @@ public:
     void PostLoad(map<long unsigned int, KeyFrame*> mpKFid);
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
 
-    void storeObject(Object* obj);
+
 protected:
 
    // Associated vocabulary

@@ -6,13 +6,14 @@
 #include <opencv2/opencv.hpp>
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/common/transforms.h>
+#include <Eigen/StdVector>
 using namespace std;
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Matrix4f)
 class OCRDetection{
-    private:
-        string content_;
-
-        cv::Rect roi_;
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         OCRDetection();
 
         OCRDetection(const OCRDetection& ocr);
@@ -24,25 +25,34 @@ class OCRDetection{
         cv::Rect getRoI() const;
 
         OCRDetection& operator=(const OCRDetection& ocr);
+
+    private:
+        string content_;
+
+        cv::Rect roi_;
 };
 
 class Object{
-    private:
-        string name_;
-        Eigen::Matrix4f pose_;
+    
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         Object();
 
-        Object(const string& name, const Eigen::Matrix4f& pose);
+        Object(const string& name);
 
         string getClassName() const;
 
+        bool getEstBbox(const Eigen::Matrix3f& K, const Eigen::Matrix4f& cam_in_map, cv::Rect& output) const;
+
+    private:
+        string name_;
+        pcl::PointCloud<pcl::PointXYZRGB> cloud_;
 };
 
 class Detection{
     
     public: 
-
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         Detection();
 
         Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content = "");
@@ -61,20 +71,46 @@ class Detection{
 
         void setCorrespondence(Object* obj);
 
-        void setSensorPose(const Eigen::Matrix4f& sensor_pose);
 
         Object* getObject() const;
-        Eigen::Matrix4f sensor_pose_;
+
 
     private:
-        
         cv::Rect roi_;
         cv::Mat mask_;
         string name_;
         string content_;
         Object* object_;
+        
 };
 
+class DetectionGroup{
+    
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW      
+    private:
+        double stamp_;
+        cv::Mat color_img;
+        cv::Mat depth_img;
+        Eigen::Matrix4f sensor_pose_;
+        Eigen::Matrix3f K_;
+        vector<Detection> detections_;
+    public:
+        DetectionGroup();
+
+        DetectionGroup(const DetectionGroup& dg);
+
+        DetectionGroup(const cv::Mat& color, const cv::Mat& depth, const Eigen::Matrix4f& sensor_pose,
+        const vector<Detection>& detections, const Eigen::Matrix3f& K, double stamp);
+
+        ~DetectionGroup();
+
+        double stamp() const;
+
+        void detections(vector<Detection>& output) const;
+
+        Eigen::Matrix4f getSensorPose() const;
+};
 
 
 

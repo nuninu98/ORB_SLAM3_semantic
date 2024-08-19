@@ -41,6 +41,8 @@ MESSAGE(${OpenCV_VERSION})
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(realsense2)
+find_package(PCL 1.8 REQUIRED)
+
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
@@ -52,6 +54,19 @@ ${Pangolin_INCLUDE_DIRS}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+add_library(${PROJECT_NAME}_DATA_TYPE SHARED
+include/DataType.h
+src/DataType.cc
+
+)
+
+target_link_libraries(${PROJECT_NAME}_DATA_TYPE
+${OpenCV_LIBS}
+${EIGEN3_LIBS}
+${PCL_LIBRARIES}
+-lboost_serialization
+-lcrypto
+)
 
 add_library(${PROJECT_NAME} SHARED
 src/System.cc
@@ -82,7 +97,6 @@ src/GeometricTools.cc
 src/TwoViewReconstruction.cc
 src/Config.cc
 src/Settings.cc
-src/DataType.cc
 include/System.h
 include/Tracking.h
 include/LocalMapping.h
@@ -113,14 +127,13 @@ include/TwoViewReconstruction.h
 include/SerializationUtils.h
 include/Config.h
 include/Settings.h
-include/DataType.h)
+)
 
 add_subdirectory(Thirdparty/g2o)
 
 target_link_libraries(${PROJECT_NAME}
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
+${PROJECT_NAME}_DATA_TYPE
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 -lboost_serialization

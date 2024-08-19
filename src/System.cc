@@ -396,7 +396,7 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
     return Tcw;
 }
 
-Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, vector<Detection>& detections, const vector<IMU::Point>& vImuMeas, string filename){
+Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, vector<DetectionGroup>& detections, const vector<IMU::Point>& vImuMeas, string filename){
     
     if(mSensor!=RGBD  && mSensor!=IMU_RGBD)
     {

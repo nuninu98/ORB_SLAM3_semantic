@@ -76,7 +76,7 @@ public:
     Sophus::SE3f GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp, string filename);
     Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, string filename);
 
-    Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, const vector<Detection>& detections, string filename);
+    Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, const vector<DetectionGroup>& detections, string filename);
     Sophus::SE3f GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename);
 
     void GrabImuData(const IMU::Point &imuMeasurement);
@@ -205,7 +205,7 @@ protected:
     // Main tracking function. It is independent of the input sensor.
     //void Track();
 
-    void Track(const vector<Detection>& detections = vector<Detection>());
+    void Track(const vector<DetectionGroup>& detections = vector<DetectionGroup>());
 
     // Map initialization for stereo and RGB-D
     void StereoInitialization();
@@ -231,7 +231,7 @@ protected:
     void SearchLocalPoints();
 
     bool NeedNewKeyFrame();
-    void CreateNewKeyFrame(const vector<Detection>& detections= vector<Detection>());
+    void CreateNewKeyFrame(const vector<DetectionGroup>& detections= vector<DetectionGroup>());
 
     // Perform preintegration from last frame
     void PreintegrateIMU();
