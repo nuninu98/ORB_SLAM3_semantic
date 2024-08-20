@@ -40,9 +40,47 @@ Object* Detection::getObject() const{
     return object_;
 }
 
-// Eigen::Matrix4f Detection::getSensorPose() const{
-//     return sensor_pose_;
-// }
+void Detection::generateCloud(const cv::Mat& color_mat, const cv::Mat& depth_mat, const Eigen::Matrix3f& K){
+    if(!cloud_.empty()){
+        return;
+    }
+    vector<pcl::PointXYZRGB> raw_cloud;
+    for(int r = 0; r < color_mat.rows; r += 2){
+        for(int c = 0; c < color_mat.cols; c+= 2){
+            float depth = depth_mat.at<float>(r, c);
+            if(isnanf(depth) || depth < 1.0e-4){
+                continue;
+            }
+            if(!roi_.contains(cv::Point2i(c, r))){
+                continue;
+            }
+            Eigen::Vector3f pix(c, r, 1.0);
+            float x = (c - K(0, 2)) * depth / K(0, 0);
+            float y = (r - K(1, 2)) * depth / K(1, 1);
+            pcl::PointXYZRGB pt;
+            pt.x = x;
+            pt.y = y;
+            pt.z = depth;
+            pt.r = color_mat.at<cv::Vec3b>(r, c)[2];
+            pt.g = color_mat.at<cv::Vec3b>(r, c)[1];
+            pt.b = color_mat.at<cv::Vec3b>(r, c)[0];
+            raw_cloud.push_back(pt);
+        }
+    }
+    sort(raw_cloud.begin(), raw_cloud.end(), [](const pcl::PointXYZRGB& pt1, const pcl::PointXYZRGB& pt2){
+        return pt1.z < pt2.z;
+    });
+    int left = (float)raw_cloud.size() * 0.1;
+    int right = (float)raw_cloud.size() * 0.9;
+    for(int i = left; i <= min((int)raw_cloud.size()-1, right); ++i){
+        cloud_.push_back(raw_cloud[i]);
+    }
+}
+
+void Detection::getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const{
+    output.clear();
+    output = cloud_;
+}
 
 
 //=====================OCR DETECTION======================
@@ -80,8 +118,11 @@ Object::Object(){
 
 }
 
-Object::Object(const string& name): name_(name){
+Object::Object(const string& name, const pcl::PointCloud<pcl::PointXYZRGB>& cloud): name_(name), cloud_(cloud){
 
+}
+
+Object::Object(const Object& obj): name_(obj.name_), cloud_(obj.cloud_){
 }
 
 string Object::getClassName() const{
@@ -126,6 +167,15 @@ bool Object::getEstBbox(const Eigen::Matrix3f& K, const Eigen::Matrix4f& cam_in_
     output = cv::Rect(cv::Point(xmin, ymin), cv::Point(xmax, ymax));
     return true;
 }
+
+void Object::setCloud(const pcl::PointCloud<pcl::PointXYZRGB>& input){
+    cloud_ = input;
+}
+        
+void Object::getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const{
+    output.clear();
+    output = cloud_;
+}
 //=====================DetectionGroup================
 DetectionGroup::DetectionGroup(){}
 
@@ -139,7 +189,9 @@ const vector<Detection>& detections, const Eigen::Matrix3f& K, double stamp): co
  sensor_pose_(sensor_pose), stamp_(stamp), K_(K), detections_(detections)
 {
    // detection sibal
-    
+    for(auto& elem : detections_){
+        elem.generateCloud(color, depth, K);
+    }
 }
 
 DetectionGroup::~DetectionGroup(){ //fix this!!!!
@@ -157,4 +209,8 @@ void DetectionGroup::detections(vector<Detection>& output) const{
 
 Eigen::Matrix4f DetectionGroup::getSensorPose() const{
     return sensor_pose_;
+}
+
+Eigen::Matrix3f DetectionGroup::getIntrinsic() const{
+    return K_;
 }

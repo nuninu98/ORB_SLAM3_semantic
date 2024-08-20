@@ -195,6 +195,8 @@ public:
     void registerKeyframeCall(bool* flag, condition_variable* cv);
 
     vector<KeyFrame*> getKeyframes();
+
+    void getHierarchyGraph(unordered_map<int, vector<Object*>>& output) const;
 #ifdef REGISTER_TIMES
     void InsertRectTime(double& time);
     void InsertResizeTime(double& time);

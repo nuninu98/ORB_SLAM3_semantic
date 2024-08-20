@@ -1625,5 +1625,9 @@ vector<KeyFrame*> System::getKeyframes(){
     return output;
 }
 
+
+void System::getHierarchyGraph(unordered_map<int, vector<Object*>>& output) const{
+    mpKeyFrameDatabase->getHGraph(output);
+}
 } //namespace ORB_SLAM
 

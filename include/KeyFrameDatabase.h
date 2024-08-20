@@ -85,6 +85,8 @@ public:
     void PostLoad(map<long unsigned int, KeyFrame*> mpKFid);
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
 
+    void getHGraph(unordered_map<int, vector<Object*>>& output) const;
+
 
 protected:
 
