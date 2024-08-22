@@ -1167,6 +1167,9 @@ int KeyFrame::getFloor() const{
 void KeyFrame::setDetection(const vector<DetectionGroup>& dets){
     //cout<<"DETS: "<<dets.size()<<endl;
     detections_ = dets;
+    for(auto& elem : detections_){
+        elem.setKeyFrame(this);
+    }
     // if(mPrevKF != NULL){ // generate or connect to the object
     //     vector<Detection> prev_dets;
     //     mPrevKF->getDetection(prev_dets);

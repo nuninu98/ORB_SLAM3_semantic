@@ -57,9 +57,9 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
         vector<Detection> detections;
         dg.detections(detections);
         Eigen::Matrix4f cam_in_map = pKF->GetPoseInverse().matrix()* dg.getSensorPose();
-        for(const auto& det : detections){
+        for(auto& det : detections){
             cv::Rect box_est;
-            double max_iou = 0.2;
+            double max_iou = 0.1;
             int idx = -1;
             
             for(int i = 0; i < tgt_objs.size(); ++i){
@@ -67,7 +67,7 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
                     tgt_objs[i]->getEstBbox(K, cam_in_map, box_est);
                     cv::Rect common = box_est & det.getRoI();
                     double iou = ((double)common.area())/(double)(det.getRoI().area() + box_est.area() - common.area());
-                    // cout<<"IOU: "<<iou<<endl;
+                    cout<<"IOU: "<<iou<<endl;
                     // cout<<"COMM: "<<common<<endl;
                     // cout<<"ACT: \n"<<det.getRoI()<<"\n"<<"EST: \n"<<box_est<<endl;
                     if(iou > max_iou){
@@ -78,6 +78,7 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
             }
 
             if(idx != -1){ // matched
+                cout<<"MATCH"<<endl;
                 pcl::PointCloud<pcl::PointXYZRGB> cloud;
                 det.getCloud(cloud);
                 pcl::PointCloud<pcl::PointXYZRGB> cloud_tf;
@@ -88,16 +89,19 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
                 best_obj->getCloud(*obj_cloud);
 
                 *obj_cloud = *obj_cloud + cloud_tf;
+                best_obj->addDetection(&det);
             }
             else{ //initialize
+                cout<<"INIT"<<endl;
                 pcl::PointCloud<pcl::PointXYZRGB> cloud;
                 det.getCloud(cloud);
                 pcl::PointCloud<pcl::PointXYZRGB> cloud_tf;
                 pcl::transformPointCloud(cloud, cloud_tf, cam_in_map);
                 Object* new_obj = new Object(det.getClassName(), cloud_tf);
+                new_obj->addDetection(&det);
                 h_graph_[pKF->getFloor()].push_back(new_obj);
             }
-            //cout<<"===="<<endl;
+            cout<<"===="<<endl;
             
         }
         

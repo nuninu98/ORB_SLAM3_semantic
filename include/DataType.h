@@ -9,120 +9,129 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/common/transforms.h>
 #include <Eigen/StdVector>
+#include "KeyFrame.h"
 using namespace std;
 EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Matrix4f)
-class OCRDetection{
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        OCRDetection();
+namespace ORB_SLAM3{
+    class DetectionGroup;
+    class KeyFrame;
+    class OCRDetection{
+        public:
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            OCRDetection();
 
-        OCRDetection(const OCRDetection& ocr);
+            OCRDetection(const OCRDetection& ocr);
 
-        OCRDetection(const cv::Rect& roi, const string& content);
+            OCRDetection(const cv::Rect& roi, const string& content);
 
-        string getContent() const;
+            string getContent() const;
 
-        cv::Rect getRoI() const;
+            cv::Rect getRoI() const;
 
-        OCRDetection& operator=(const OCRDetection& ocr);
+            OCRDetection& operator=(const OCRDetection& ocr);
 
-    private:
-        string content_;
+        private:
+            string content_;
 
-        cv::Rect roi_;
-};
+            cv::Rect roi_;
+    };
 
-class Object{
-    
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Object();
-
-        Object(const Object& obj);
+    class Detection{
         
-        Object(const string& name, const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+        public: 
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            Detection();
 
-        string getClassName() const;
+            Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content = "");
 
-        bool getEstBbox(const Eigen::Matrix3f& K, const Eigen::Matrix4f& cam_in_map, cv::Rect& output) const;
+            ~Detection();   
 
-        void setCloud(const pcl::PointCloud<pcl::PointXYZRGB>& input);
+            cv::Rect getRoI() const;
 
-        void getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const;
-    
-    private:
-        string name_;
-        pcl::PointCloud<pcl::PointXYZRGB> cloud_;  // future work : remove this and replace as keyframe pointers
-};
+            cv::Mat getMask() const;
 
-class Detection{
-    
-    public: 
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Detection();
+            string getClassName() const;
 
-        Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content = "");
+            string getContent() const; // only for room number
 
-        ~Detection();   
+            void copyContent(const OCRDetection& ocr_output);
 
-        cv::Rect getRoI() const;
+            void generateCloud(const cv::Mat& color_mat, const cv::Mat& depth_mat, const Eigen::Matrix3f& K);
 
-        cv::Mat getMask() const;
+            void getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const;
 
-        string getClassName() const;
+            void setDetectionGroup(DetectionGroup* dg);
+        private:
+            cv::Rect roi_;
+            cv::Mat mask_;
+            string name_;
+            string content_;
+            pcl::PointCloud<pcl::PointXYZRGB> cloud_;
+            DetectionGroup* dg_;
+            
+    };
 
-        string getContent() const; // only for room number
-
-        void copyContent(const OCRDetection& ocr_output);
-
-        void setCorrespondence(Object* obj);
-
-
-        Object* getObject() const;
-
-        void generateCloud(const cv::Mat& color_mat, const cv::Mat& depth_mat, const Eigen::Matrix3f& K);
-
-        void getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const;
-    private:
-        cv::Rect roi_;
-        cv::Mat mask_;
-        string name_;
-        string content_;
-        Object* object_;
-        pcl::PointCloud<pcl::PointXYZRGB> cloud_;
-
+    class Object{
         
-};
+        public:
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            Object();
 
-class DetectionGroup{
+            Object(const Object& obj);
+            
+            Object(const string& name, const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+
+            string getClassName() const;
+
+            bool getEstBbox(const Eigen::Matrix3f& K, const Eigen::Matrix4f& cam_in_map, cv::Rect& output) const;
+
+            void setCloud(const pcl::PointCloud<pcl::PointXYZRGB>& input);
+
+            void getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const;
+        
+            void addDetection(Detection* det);
+        private:
+            string name_;
+            pcl::PointCloud<pcl::PointXYZRGB> cloud_;  // future work : remove this and replace as keyframe pointers
+            vector<Detection*> seens_;
+    };
+
     
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW      
-    private:
-        double stamp_;
-        cv::Mat color_img;
-        cv::Mat depth_img;
-        Eigen::Matrix4f sensor_pose_;
-        Eigen::Matrix3f K_;
-        vector<Detection> detections_;
-    public:
-        DetectionGroup();
 
-        DetectionGroup(const DetectionGroup& dg);
+    class DetectionGroup{
+        
+        public:
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW      
+        private:
+            double stamp_;
+            cv::Mat color_img;
+            cv::Mat depth_img;
+            Eigen::Matrix4f sensor_pose_;
+            Eigen::Matrix3f K_;
+            vector<Detection> detections_;
+            KeyFrame* kf_;
+        public:
+            DetectionGroup();
 
-        DetectionGroup(const cv::Mat& color, const cv::Mat& depth, const Eigen::Matrix4f& sensor_pose,
-        const vector<Detection>& detections, const Eigen::Matrix3f& K, double stamp);
+            DetectionGroup(const DetectionGroup& dg);
 
-        ~DetectionGroup();
+            DetectionGroup(const cv::Mat& color, const cv::Mat& depth, const Eigen::Matrix4f& sensor_pose,
+            const vector<Detection>& detections, const Eigen::Matrix3f& K, double stamp);
 
-        double stamp() const;
+            ~DetectionGroup();
 
-        void detections(vector<Detection>& output) const;
+            double stamp() const;
 
-        Eigen::Matrix4f getSensorPose() const;
+            void detections(vector<Detection>& output) const;
 
-        Eigen::Matrix3f getIntrinsic() const;
-};
+            Eigen::Matrix4f getSensorPose() const;
+
+            Eigen::Matrix3f getIntrinsic() const;
+
+            void setKeyFrame(KeyFrame* kf);
+    };
+}
+
 
 
 
