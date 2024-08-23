@@ -49,27 +49,24 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
         h_graph_.insert(make_pair(pKF->getFloor(), vector<Object*>()));
     }
     vector<Object*> tgt_objs = h_graph_[pKF->getFloor()];
-    vector<DetectionGroup> kf_dets;
+    vector<const DetectionGroup*> kf_dets;
     pKF->getDetection(kf_dets);
     for(const auto& dg : kf_dets){
-        Eigen::Matrix3f K = dg.getIntrinsic();
+        Eigen::Matrix3f K = dg->getIntrinsic();
     
-        vector<Detection> detections;
-        dg.detections(detections);
-        Eigen::Matrix4f cam_in_map = pKF->GetPoseInverse().matrix()* dg.getSensorPose();
+        vector<const Detection*> detections;
+        dg->detections(detections);
+        Eigen::Matrix4f cam_in_map = pKF->GetPoseInverse().matrix()* dg->getSensorPose();
         for(auto& det : detections){
             cv::Rect box_est;
             double max_iou = 0.1;
             int idx = -1;
             
             for(int i = 0; i < tgt_objs.size(); ++i){
-                if(det.getClassName() == tgt_objs[i]->getClassName()){
+                if(det->getClassName() == tgt_objs[i]->getClassName()){
                     tgt_objs[i]->getEstBbox(K, cam_in_map, box_est);
-                    cv::Rect common = box_est & det.getRoI();
-                    double iou = ((double)common.area())/(double)(det.getRoI().area() + box_est.area() - common.area());
-                    cout<<"IOU: "<<iou<<endl;
-                    // cout<<"COMM: "<<common<<endl;
-                    // cout<<"ACT: \n"<<det.getRoI()<<"\n"<<"EST: \n"<<box_est<<endl;
+                    cv::Rect common = box_est & det->getRoI();
+                    double iou = ((double)common.area())/(double)(det->getRoI().area() + box_est.area() - common.area());
                     if(iou > max_iou){
                         max_iou = iou;
                         idx = i;
@@ -80,25 +77,18 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
             if(idx != -1){ // matched
                 cout<<"MATCH"<<endl;
                 pcl::PointCloud<pcl::PointXYZRGB> cloud;
-                det.getCloud(cloud);
-                pcl::PointCloud<pcl::PointXYZRGB> cloud_tf;
-                pcl::transformPointCloud(cloud, cloud_tf, cam_in_map);
+                det->getCloud(cloud);
                 Object* best_obj = tgt_objs[idx];
-
-                pcl::PointCloud<pcl::PointXYZRGB>::Ptr obj_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-                best_obj->getCloud(*obj_cloud);
-
-                *obj_cloud = *obj_cloud + cloud_tf;
-                best_obj->addDetection(&det);
+                best_obj->addDetection(det);
             }
             else{ //initialize
                 cout<<"INIT"<<endl;
                 pcl::PointCloud<pcl::PointXYZRGB> cloud;
-                det.getCloud(cloud);
+                det->getCloud(cloud);
                 pcl::PointCloud<pcl::PointXYZRGB> cloud_tf;
                 pcl::transformPointCloud(cloud, cloud_tf, cam_in_map);
-                Object* new_obj = new Object(det.getClassName(), cloud_tf);
-                new_obj->addDetection(&det);
+                Object* new_obj = new Object(det->getClassName(), cloud_tf);
+                new_obj->addDetection(det);
                 h_graph_[pKF->getFloor()].push_back(new_obj);
             }
             cout<<"===="<<endl;

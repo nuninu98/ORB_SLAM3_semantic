@@ -78,6 +78,10 @@ namespace ORB_SLAM3{
         dg_ = dg;
     }
 
+    const DetectionGroup* Detection::getDetectionGroup() const{
+        return dg_;
+    }
+
 
     //=====================OCR DETECTION======================
     OCRDetection::OCRDetection(){
@@ -170,10 +174,19 @@ namespace ORB_SLAM3{
             
     void Object::getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const{
         output.clear();
-        output = cloud_;
+        //output = cloud_;
+        for(const auto& det_seen : seens_){
+            pcl::PointCloud<pcl::PointXYZRGB> det_cloud, cloud_tf;
+            det_seen->getCloud(det_cloud);
+            Eigen::Matrix4f base_in_map = det_seen->getDetectionGroup()->getKeyFrame()->GetPoseInverse().matrix();
+            Eigen::Matrix4f cam_in_base = det_seen->getDetectionGroup()->getSensorPose();
+            Eigen::Matrix4f cam_in_map = base_in_map * cam_in_base;
+            pcl::transformPointCloud(det_cloud, cloud_tf, cam_in_map);
+            output += cloud_tf;
+        }
     }
 
-    void Object::addDetection(Detection* det){
+    void Object::addDetection(const Detection* det){
         seens_.push_back(det);
     }
     //=====================DetectionGroup================
@@ -181,7 +194,9 @@ namespace ORB_SLAM3{
 
     DetectionGroup::DetectionGroup(const DetectionGroup& dg) : color_img(dg.color_img), depth_img(dg.depth_img), 
     sensor_pose_(dg.sensor_pose_), detections_(dg.detections_), K_(dg.K_), stamp_(dg.stamp_), kf_(dg.kf_){
-
+        for(auto& elem : detections_){
+            elem.setDetectionGroup(this);
+        }
     }
 
     DetectionGroup::DetectionGroup(const cv::Mat& color, const cv::Mat& depth, const Eigen::Matrix4f& sensor_pose,
@@ -203,9 +218,11 @@ namespace ORB_SLAM3{
         return stamp_;
     }
 
-    void DetectionGroup::detections(vector<Detection>& output) const{
+    void DetectionGroup::detections(vector<const Detection*>& output) const{
         output.clear();
-        output = detections_;
+        for(int i = 0; i < detections_.size(); ++i){
+            output.push_back(&detections_[i]);
+        }
     }
 
     Eigen::Matrix4f DetectionGroup::getSensorPose() const{
@@ -218,5 +235,9 @@ namespace ORB_SLAM3{
 
     void DetectionGroup::setKeyFrame(KeyFrame* kf){
         kf_ = kf;    
+    }
+
+    KeyFrame* DetectionGroup::getKeyFrame() const{
+        return kf_;
     }
 }

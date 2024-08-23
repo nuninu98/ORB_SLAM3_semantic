@@ -314,7 +314,7 @@ public:
 
     void setDetection(const vector<DetectionGroup>& dets);
 
-    void getDetection(vector<DetectionGroup>& output) const;
+    void getDetection(vector<const DetectionGroup*>& output) const;
 
     bool bImu;
 

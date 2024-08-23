@@ -1165,53 +1165,18 @@ int KeyFrame::getFloor() const{
 }
 
 void KeyFrame::setDetection(const vector<DetectionGroup>& dets){
-    //cout<<"DETS: "<<dets.size()<<endl;
     detections_ = dets;
     for(auto& elem : detections_){
         elem.setKeyFrame(this);
     }
-    // if(mPrevKF != NULL){ // generate or connect to the object
-    //     vector<Detection> prev_dets;
-    //     mPrevKF->getDetection(prev_dets);
-    //     for(int i = 0; i < dets.size(); ++i){
-    //         double max_iou = 0.2;
-    //         int its_id = -1;
-    //         //============Method 1: IOU=========
-    //         for(int j = 0; j < prev_dets.size(); ++j){
-    //             if(dets[i].getClassName() != prev_dets[j].getClassName()){
-    //                 continue;
-    //             }
-    //             cv::Rect common = dets[i].getRoI() & prev_dets[j].getRoI();
-    //             double iou = (double)common.area() / (double)(dets[i].getRoI().area() + prev_dets[j].getRoI().area() - common.area());
-    //             if(iou > max_iou){
-    //                 its_id = j;
-    //                 max_iou = iou;
-    //             }
-    //         }
-    //         //==================================
-    //         if(its_id != -1){ // matched
-    //             if(prev_dets[its_id].getObject() != nullptr){
-    //                 detections_[i].setCorrespondence(prev_dets[its_id].getObject());
-    //                 cout<<"MATCH: "<<dets[i].getClassName()<<": "<<dets[i].getContent()<<endl;
-    //             }
-    //             else{
-    //                 Object* obj = new Object(detections_[i].getClassName(), Eigen::Matrix4f::Identity());
-    //                 mpKeyFrameDB->storeObject(obj);
-    //                 detections_[i].setCorrespondence(obj);
-    //                 prev_dets[its_id].setCorrespondence(obj);
-    //                 cout<<"GENERATED: "<<dets[i].getClassName()<<": "<<dets[i].getContent()<<endl;
-    //             }
-    //         }
-    //         else{
-    //             cout<<"NOOOO curr: "<<detections_.size()<<" vs prev: "<<prev_dets.size()<<endl;
-    //         }
-    //     }
-    // }
+  
 }
 
-void KeyFrame::getDetection(vector<DetectionGroup>& output) const{
+void KeyFrame::getDetection(vector<const DetectionGroup*>& output) const{
     output.clear();
-    output = detections_;
+    for(int i = 0; i < detections_.size(); ++i){
+        output.push_back(&detections_[i]);
+    }
 }
 
 } //namespace ORB_SLAM

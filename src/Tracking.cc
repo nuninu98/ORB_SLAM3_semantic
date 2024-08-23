@@ -1850,11 +1850,11 @@ void Tracking::Track(const vector<DetectionGroup>& detections)
     }
 
     for(auto& elem : detections){
-        vector<Detection> dets;
+        vector<const Detection*> dets;
         elem.detections(dets);
         for(const auto& d : dets){
-            if(d.getClassName() == "room_number"){
-                int floor = (stoi(d.getContent()) % 1000) / 100;
+            if(d->getClassName() == "room_number"){
+                int floor = (stoi(d->getContent()) % 1000) / 100;
                 if(floor_ != floor){
                     cout<<"SET FLOOR "<<floor <<" from "<<floor_<<endl;
                 }

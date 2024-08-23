@@ -61,6 +61,8 @@ namespace ORB_SLAM3{
             void getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const;
 
             void setDetectionGroup(DetectionGroup* dg);
+
+            const DetectionGroup* getDetectionGroup() const;
         private:
             cv::Rect roi_;
             cv::Mat mask_;
@@ -89,11 +91,11 @@ namespace ORB_SLAM3{
 
             void getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const;
         
-            void addDetection(Detection* det);
+            void addDetection(const Detection* det);
         private:
             string name_;
             pcl::PointCloud<pcl::PointXYZRGB> cloud_;  // future work : remove this and replace as keyframe pointers
-            vector<Detection*> seens_;
+            vector<const Detection*> seens_;
     };
 
     
@@ -122,13 +124,15 @@ namespace ORB_SLAM3{
 
             double stamp() const;
 
-            void detections(vector<Detection>& output) const;
+            void detections(vector<const Detection*>& output) const;
 
             Eigen::Matrix4f getSensorPose() const;
 
             Eigen::Matrix3f getIntrinsic() const;
 
             void setKeyFrame(KeyFrame* kf);
+
+            KeyFrame* getKeyFrame() const;
     };
 }
 
