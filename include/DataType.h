@@ -10,6 +10,7 @@
 #include <pcl/common/transforms.h>
 #include <Eigen/StdVector>
 #include "KeyFrame.h"
+#include <pcl/kdtree/kdtree_flann.h>
 using namespace std;
 EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Matrix4f)
 namespace ORB_SLAM3{
@@ -81,20 +82,19 @@ namespace ORB_SLAM3{
 
             Object(const Object& obj);
             
-            Object(const string& name, const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+            Object(const string& name);
 
             string getClassName() const;
 
             bool getEstBbox(const Eigen::Matrix3f& K, const Eigen::Matrix4f& cam_in_map, cv::Rect& output) const;
 
-            void setCloud(const pcl::PointCloud<pcl::PointXYZRGB>& input);
-
             void getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const;
         
             void addDetection(const Detection* det);
+        
+            void getConnectedKeyFrames(vector<KeyFrame*>& output) const;
         private:
             string name_;
-            pcl::PointCloud<pcl::PointXYZRGB> cloud_;  // future work : remove this and replace as keyframe pointers
             vector<const Detection*> seens_;
     };
 

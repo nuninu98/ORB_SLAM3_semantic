@@ -1629,5 +1629,20 @@ vector<KeyFrame*> System::getKeyframes(){
 void System::getHierarchyGraph(unordered_map<int, vector<Object*>>& output) const{
     mpKeyFrameDatabase->getHGraph(output);
 }
+
+void System::getMapPointCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const{
+    output.clear();
+    const vector<MapPoint*>& map_points = mpAtlas->GetAllMapPoints();
+    output.clear();
+    for(const auto& mpt : map_points){
+        pcl::PointXYZRGB pt;
+        auto pose = mpt->GetWorldPos();
+        pt.x = pose(0);
+        pt.y = pose(1);
+        pt.z = pose(2);
+        output.push_back(pt);
+    }
+}
+
 } //namespace ORB_SLAM
 

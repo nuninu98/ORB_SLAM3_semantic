@@ -59,37 +59,63 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
         Eigen::Matrix4f cam_in_map = pKF->GetPoseInverse().matrix()* dg->getSensorPose();
         for(auto& det : detections){
             cv::Rect box_est;
-            double max_iou = 0.1;
+            double max_score = 1.0;
             int idx = -1;
             
             for(int i = 0; i < tgt_objs.size(); ++i){
+                pcl::PointXYZRGB obj_centroid;
+                pcl::PointCloud<pcl::PointXYZRGB> obj_cloud;
+                tgt_objs[i]->getCloud(obj_cloud);
+                pcl::computeCentroid(obj_cloud, obj_centroid);
                 if(det->getClassName() == tgt_objs[i]->getClassName()){
-                    tgt_objs[i]->getEstBbox(K, cam_in_map, box_est);
-                    cv::Rect common = box_est & det->getRoI();
-                    double iou = ((double)common.area())/(double)(det->getRoI().area() + box_est.area() - common.area());
-                    if(iou > max_iou){
-                        max_iou = iou;
+                    //=============IOU Method================
+                    // tgt_objs[i]->getEstBbox(K, cam_in_map, box_est);
+                    // cv::Rect common = box_est & det->getRoI();
+                    // double iou = ((double)common.area())/(double)(det->getRoI().area() + box_est.area() - common.area());
+                    // if(iou > max_score){
+                    //     max_score = iou;
+                    //     idx = i;
+                    // }
+                    //=======================================
+
+                    //=============Euclidean Dist Method=====
+                    pcl::PointCloud<pcl::PointXYZRGB> cloud;
+                    det->getCloud(cloud);
+                    pcl::PointCloud<pcl::PointXYZRGB> cloud_tf;
+                    pcl::transformPointCloud(cloud, cloud_tf, cam_in_map);
+                    pcl::PointXYZRGB det_centroid;
+                    pcl::computeCentroid(cloud_tf, det_centroid);
+
+                    double dist = sqrt(pow(det_centroid.x- obj_centroid.x, 2) + pow(det_centroid.y- obj_centroid.y, 2) + pow(det_centroid.z- obj_centroid.z, 2));
+                    double score = 1.0 / dist;
+                    if(score > max_score){
+                        max_score = score;
                         idx = i;
                     }
+                    //=======================================
                 }
             }
 
             if(idx != -1){ // matched
-                cout<<"MATCH"<<endl;
+                //cout<<"MATCH"<<endl;
                 pcl::PointCloud<pcl::PointXYZRGB> cloud;
                 det->getCloud(cloud);
                 Object* best_obj = tgt_objs[idx];
                 best_obj->addDetection(det);
             }
             else{ //initialize
-                cout<<"INIT"<<endl;
+                
                 pcl::PointCloud<pcl::PointXYZRGB> cloud;
                 det->getCloud(cloud);
-                pcl::PointCloud<pcl::PointXYZRGB> cloud_tf;
-                pcl::transformPointCloud(cloud, cloud_tf, cam_in_map);
-                Object* new_obj = new Object(det->getClassName(), cloud_tf);
-                new_obj->addDetection(det);
-                h_graph_[pKF->getFloor()].push_back(new_obj);
+                if(!cloud.empty()){
+                    //cout<<"INIT"<<endl;
+                    pcl::PointCloud<pcl::PointXYZRGB> cloud_tf;
+                    pcl::transformPointCloud(cloud, cloud_tf, cam_in_map);
+                    Object* new_obj = new Object(det->getClassName());
+                    new_obj->addDetection(det);
+                    h_graph_[pKF->getFloor()].push_back(new_obj);
+                }
+               
             }
             cout<<"===="<<endl;
             

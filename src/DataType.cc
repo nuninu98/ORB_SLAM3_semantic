@@ -37,8 +37,8 @@ namespace ORB_SLAM3{
             return;
         }
         vector<pcl::PointXYZRGB> raw_cloud;
-        for(int r = 0; r < color_mat.rows; ++r){
-            for(int c = 0; c < color_mat.cols; ++c){
+        for(int r = 0; r < color_mat.rows; r += 3){
+            for(int c = 0; c < color_mat.cols; c += 3){
                 float depth = depth_mat.at<float>(r, c);
                 if(isnanf(depth) || depth < 1.0e-4){
                     continue;
@@ -62,8 +62,8 @@ namespace ORB_SLAM3{
         sort(raw_cloud.begin(), raw_cloud.end(), [](const pcl::PointXYZRGB& pt1, const pcl::PointXYZRGB& pt2){
             return pt1.z < pt2.z;
         });
-        int left = 0;//(float)raw_cloud.size() * 0.1;
-        int right = raw_cloud.size()-1;//(float)raw_cloud.size() * 0.9;
+        int left = (float)raw_cloud.size() * 0.1;
+        int right = (float)raw_cloud.size() * 0.9;
         for(int i = left; i <= min((int)raw_cloud.size()-1, right); ++i){
             cloud_.push_back(raw_cloud[i]);
         }
@@ -118,11 +118,11 @@ namespace ORB_SLAM3{
 
     }
 
-    Object::Object(const string& name, const pcl::PointCloud<pcl::PointXYZRGB>& cloud): name_(name), cloud_(cloud){
+    Object::Object(const string& name): name_(name){
 
     }
 
-    Object::Object(const Object& obj): name_(obj.name_), cloud_(obj.cloud_){
+    Object::Object(const Object& obj): name_(obj.name_){
     }
 
     string Object::getClassName() const{
@@ -133,12 +133,14 @@ namespace ORB_SLAM3{
         Eigen::Matrix4f ext = cam_in_map.inverse();
         float radii = 0.0;
         Eigen::Vector3f center = Eigen::Vector3f::Zero();
-        for(const auto& pt : cloud_){
+        pcl::PointCloud<pcl::PointXYZRGB> obj_cloud;
+        getCloud(obj_cloud);
+        for(const auto& pt : obj_cloud){
             Eigen::Vector4f pt_v(pt.x, pt.y, pt.z, 1.0);
             Eigen::Vector4f pt_cam = ext * pt_v;
             center += pt_cam.block<3, 1>(0, 0);
         }
-        center = center / (float)cloud_.size();
+        center = center / (float)obj_cloud.size();
         if(center(2) < 0.0){
             return false;
         }
@@ -148,7 +150,7 @@ namespace ORB_SLAM3{
         float ymin = 10000.0;
         float xmax = 0.0;
         float ymax = 0.0;
-        for(const auto& pt : cloud_){
+        for(const auto& pt : obj_cloud){
             Eigen::Vector4f pt_v(pt.x, pt.y, pt.z, 1.0);
             Eigen::Vector4f pt_cam = ext * pt_v;
             if(pt_cam(2) < 0.0){
@@ -167,28 +169,47 @@ namespace ORB_SLAM3{
         output = cv::Rect(cv::Point(xmin, ymin), cv::Point(xmax, ymax));
         return true;
     }
-
-    void Object::setCloud(const pcl::PointCloud<pcl::PointXYZRGB>& input){
-        cloud_ = input;
-    }
-            
+    
     void Object::getCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const{
         output.clear();
-        //output = cloud_;
-        for(const auto& det_seen : seens_){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr accum(new pcl::PointCloud<pcl::PointXYZRGB>());
+        pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
+        for(int i = 0; i < seens_.size(); ++i){    
             pcl::PointCloud<pcl::PointXYZRGB> det_cloud, cloud_tf;
-            det_seen->getCloud(det_cloud);
-            Eigen::Matrix4f base_in_map = det_seen->getDetectionGroup()->getKeyFrame()->GetPoseInverse().matrix();
-            Eigen::Matrix4f cam_in_base = det_seen->getDetectionGroup()->getSensorPose();
+            seens_[i]->getCloud(det_cloud);
+            Eigen::Matrix4f base_in_map = seens_[i]->getDetectionGroup()->getKeyFrame()->GetPoseInverse().matrix();
+            Eigen::Matrix4f cam_in_base = seens_[i]->getDetectionGroup()->getSensorPose();
             Eigen::Matrix4f cam_in_map = base_in_map * cam_in_base;
             pcl::transformPointCloud(det_cloud, cloud_tf, cam_in_map);
-            output += cloud_tf;
+            if(accum->empty()){
+                *accum += cloud_tf;
+            }
+            else{
+                for(const auto& pt : cloud_tf){
+                    vector<int> ids;
+                    vector<float> dists;
+                    kdtree.nearestKSearch(pt, 1, ids, dists);
+                    if(dists[0] > 0.1){
+                        accum->push_back(pt);
+                    }
+                }
+            }
+            kdtree.setInputCloud(accum);
         }
+        output = *accum;
     }
 
     void Object::addDetection(const Detection* det){
         seens_.push_back(det);
     }
+
+    void Object::getConnectedKeyFrames(vector<KeyFrame*>& output) const{
+        output.clear();
+        for(const auto& s : seens_){
+            output.push_back(s->getDetectionGroup()->getKeyFrame());
+        }
+    }
+
     //=====================DetectionGroup================
     DetectionGroup::DetectionGroup(){}
 
