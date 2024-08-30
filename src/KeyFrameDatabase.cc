@@ -40,11 +40,10 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
 {
     unique_lock<mutex> lock(mMutex);
 
-    for(DBoW2::BowVector::const_iterator vit= pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit!=vend; vit++)
+    for(DBoW2::BowVector::const_iterator vit= pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit!=vend; vit++){
         mvInvertedFile[vit->first].push_back(pKF);
+    }
     //==============Add hierarchy graph============
-    
-
     if(h_graph_.find(pKF->getFloor()) == h_graph_.end()){
         h_graph_.insert(make_pair(pKF->getFloor(), vector<Object*>()));
     }
@@ -62,12 +61,12 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
             double max_score = 1.0;
             int idx = -1;
             
-            for(int i = 0; i < tgt_objs.size(); ++i){
-                pcl::PointXYZRGB obj_centroid;
-                pcl::PointCloud<pcl::PointXYZRGB> obj_cloud;
-                tgt_objs[i]->getCloud(obj_cloud);
-                pcl::computeCentroid(obj_cloud, obj_centroid);
+            for(int i = 0; i < tgt_objs.size(); ++i){   
                 if(det->getClassName() == tgt_objs[i]->getClassName()){
+                    pcl::PointXYZRGB obj_centroid;
+                    pcl::PointCloud<pcl::PointXYZRGB> obj_cloud;
+                    tgt_objs[i]->getCloud(obj_cloud);
+                    pcl::computeCentroid(obj_cloud, obj_centroid);
                     //=============IOU Method================
                     // tgt_objs[i]->getEstBbox(K, cam_in_map, box_est);
                     // cv::Rect common = box_est & det->getRoI();
@@ -117,7 +116,7 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
                 }
                
             }
-            cout<<"===="<<endl;
+            //cout<<"===="<<endl;
             
         }
         
@@ -710,7 +709,7 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
                 if(pKFi->mnPlaceRecognitionQuery!=pKF->mnId)
                 {
                     pKFi->mnPlaceRecognitionWords=0;
-                    if(!spConnectedKF.count(pKFi))
+                    if(!spConnectedKF.count(pKFi) && pKFi->getFloor() == pKF->getFloor())
                     {
 
                         pKFi->mnPlaceRecognitionQuery=pKF->mnId;
@@ -945,5 +944,23 @@ void KeyFrameDatabase::getHGraph(unordered_map<int, vector<Object*>>& output) co
     output = h_graph_;
 }
 
+Floor* KeyFrameDatabase::getFloor(int label){
+    if(floors_.find(label) == floors_.end()){
+        return nullptr;
+    }
+    return floors_[label];
+}
+
+void KeyFrameDatabase::addFloor(int label, KeyFrame* kf){
+    if(floors_.find(label) != floors_.end()){
+        return;
+    }
+    Floor* f = new Floor(label, kf);
+    floors_.insert(make_pair(label, f));
+}
+
+void KeyFrameDatabase::refineObjects(){
+
+}
 
 } //namespace ORB_SLAM

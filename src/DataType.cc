@@ -4,7 +4,7 @@ namespace ORB_SLAM3{
 
     }
 
-    Detection::Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content): roi_(roi), mask_(mask), name_(name), content_(content), dg_(nullptr){
+    Detection::Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name): roi_(roi), mask_(mask), name_(name), dg_(nullptr){
 
     }
 
@@ -24,12 +24,13 @@ namespace ORB_SLAM3{
         return name_;
     }
 
-    string Detection::getContent() const{
-        return content_;
-    }
+    // string Detection::getContent() const{
+    //     return content_;
+    // }
 
     void Detection::copyContent(const OCRDetection& ocr_output){
-        content_ = ocr_output.getContent();
+        name_ = name_ + ocr_output.getContent();
+        //content_ = ocr_output.getContent();
     }
 
     void Detection::generateCloud(const cv::Mat& color_mat, const cv::Mat& depth_mat, const Eigen::Matrix3f& K){
@@ -174,7 +175,7 @@ namespace ORB_SLAM3{
         output.clear();
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr accum(new pcl::PointCloud<pcl::PointXYZRGB>());
         pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
-        for(int i = 0; i < seens_.size(); ++i){    
+        for(int i = 0; i < seens_.size(); i += 3){    
             pcl::PointCloud<pcl::PointXYZRGB> det_cloud, cloud_tf;
             seens_[i]->getCloud(det_cloud);
             Eigen::Matrix4f base_in_map = seens_[i]->getDetectionGroup()->getKeyFrame()->GetPoseInverse().matrix();
@@ -260,5 +261,105 @@ namespace ORB_SLAM3{
 
     KeyFrame* DetectionGroup::getKeyFrame() const{
         return kf_;
+    }
+
+    //=================Floor RANSAC================
+    Floor::Floor(int label, KeyFrame* kf): label_(label), plane_kf_(kf){
+        kfs_.push_back(kf);
+    }   
+
+    Floor::~Floor(){
+
+    }
+
+    void Floor::addKeyFrame(KeyFrame* kf){
+        kf->setFloor(label_);
+        kfs_.push_back(kf);
+        if(kfs_.size() > 1000){
+            kfs_.pop_front();
+        }
+        refine();
+        
+    }
+
+    void Floor::refine(){
+        if(kfs_.empty()){
+            return;
+        }
+        float err_thresh = 0.7;
+        float inlier_r = 0.8;
+        float prob = 0.95;
+
+        int iter = 300;
+        //int iter = log(1.0 - prob) / log(1.0 - inlier_r);
+        int max_inliers = 0;
+
+        for(int i = 0; i < iter; ++i){
+            int id = rand() % kfs_.size();
+            float a = kfs_[id]->getPoseWithNormal()(3); // ax+by+cz+d = 0
+            float b = kfs_[id]->getPoseWithNormal()(4);
+            float c = kfs_[id]->getPoseWithNormal()(5);
+            float d = -(a*kfs_[id]->getPoseWithNormal()(0) + b*kfs_[id]->getPoseWithNormal()(1) + c*kfs_[id]->getPoseWithNormal()(2));
+            int inliers = 0;
+            for(int j = 0; j < kfs_.size(); ++j){
+                float x = kfs_[j]->getPoseWithNormal()(0);
+                float y = kfs_[j]->getPoseWithNormal()(1);
+                float z = kfs_[j]->getPoseWithNormal()(2);
+                float dist = abs(a*x + b*y + c*z + d) / sqrt(a*a + b*b + c*c);
+                if(dist < err_thresh){
+                    inliers++;
+                }
+            }
+            if(inliers > max_inliers){
+                plane_kf_ = kfs_[id];
+                max_inliers = inliers;
+                float in_rate = (float)inliers / float(kfs_.size());
+                if(in_rate > prob){
+                    break;
+                }
+            }
+        }
+        //cout<<"RATE OUT: "<<((float)max_inliers / float(kfs_.size()))<<endl;
+
+    }
+
+    Eigen::VectorXf Floor::getPlane(){
+        refine();
+        Eigen::VectorXf output = Eigen::VectorXf::Zero(6);
+        if(plane_kf_ != nullptr){
+            output = plane_kf_->getPoseWithNormal();
+        }   
+        return output;
+    }
+
+    bool Floor::isInlier(KeyFrame* kf){
+        
+        Eigen::VectorXf plane = plane_kf_->getPoseWithNormal();
+        float a = plane(3); // ax+by+cz+d = 0
+        float b = plane(4);
+        float c = plane(5);
+        float d = -(a*plane(0) + b*plane(1) + c*plane(2));
+
+        Eigen::VectorXf point = kf->getPoseWithNormal();
+        float x = point(0);
+        float y = point(1);
+        float z = point(2);
+        float dist = abs(a*x + b*y + c*z + d) / sqrt(a*a + b*b + c*c);
+        bool res = dist < 1.5;
+        if(!res){
+            cout<<"DIST ERR: "<<dist<<endl;
+        }
+        return res;
+        // Eigen::VectorXf plane = plane_kf_->getPoseWithNormal();
+        // Eigen::Vector3f point = plane.block<3, 1>(0, 0);
+        // Eigen::Vector3f norm = plane.block<3, 1>(0, 3).normalized();
+        
+        // Eigen::Vector3f kf_trans = kf->getPoseWithNormal().block<3, 1>(0, 0);
+        // float d = abs(norm.dot(kf_trans - point));
+        // bool res = d < 0.7;
+        // if(!res){
+        //     cout<<"DIST ERR: "<<d<<endl;
+        // }
+        // return res;
     }
 }

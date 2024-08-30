@@ -46,7 +46,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mbOnlyTracking(false), mbMapUpdated(false), mbVO(false), mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB),
     mbReadyToInitializate(false), mpSystem(pSys), mpViewer(NULL), bStepByStep(false),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas), mnLastRelocFrameId(0), time_recently_lost(5.0),
-    mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame*>(NULL)), floor_(-1),
+    mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame*>(NULL)), floor_(1),
     kf_flag_(nullptr), kf_cv_(nullptr)
 {
     // Load camera parameters from settings file
@@ -1849,20 +1849,20 @@ void Tracking::Track(const vector<DetectionGroup>& detections)
         mbStep = false;
     }
 
-    for(auto& elem : detections){
-        vector<const Detection*> dets;
-        elem.detections(dets);
-        for(const auto& d : dets){
-            if(d->getClassName() == "room_number"){
-                int floor = (stoi(d->getContent()) % 1000) / 100;
-                if(floor_ != floor){
-                    cout<<"SET FLOOR "<<floor <<" from "<<floor_<<endl;
-                }
-                floor_ = floor;
-            }
-        }
+    // for(auto& elem : detections){
+    //     vector<const Detection*> dets;
+    //     elem.detections(dets);
+    //     for(const auto& d : dets){
+    //         if(d->getClassName() == "room_number"){
+    //             int floor = (stoi(d->getContent()) % 1000) / 100;
+    //             if(floor_ != floor){
+    //                 cout<<"SET FLOOR "<<floor <<" from "<<floor_<<endl;
+    //             }
+    //             floor_ = floor;
+    //         }
+    //     }
         
-    }
+    // }
 
     if(mpLocalMapper->mbBadImu)
     {
@@ -3301,8 +3301,40 @@ void Tracking::CreateNewKeyFrame(const vector<DetectionGroup>& detections)
         Verbose::PrintMess("No last KF in KF creation!!", Verbose::VERBOSITY_NORMAL);
 
     //========== Add Hierarchy Graph====================
-    pKF->setFloor(floor_);
+    //pKF->setFloor(floor_);
     pKF->setDetection(detections);
+    if(mpKeyFrameDB->getFloor(floor_) == nullptr){
+        cout<<"GENERATE FLOOR: "<<floor_<<endl;
+        pKF->setFloor(floor_);
+        mpKeyFrameDB->addFloor(floor_, pKF);
+    }
+    else{
+        Floor* curr_floor = mpKeyFrameDB->getFloor(floor_);
+        if(curr_floor->isInlier(pKF)){
+            //cout<<"ADD TO FLOOR: "<<floor_<<endl;
+            pKF->setFloor(floor_);
+            curr_floor->addKeyFrame(pKF);
+        }
+        else{ // create new keyframe
+            // int fl = -1;
+            // for(int i = floor_; i >= 0; --i){
+            //     Floor* prev_floor = mpKeyFrameDB->getFloor(i);
+            //     if(prev_floor->isInlier(pKF)){
+            //         fl = i;
+            //         break;
+            //     }
+            // }
+            // if(fl == -1){
+                floor_++;
+                cout<<"NEW FLOOR: "<<floor_<<endl;
+            // }
+            // else{
+            //     floor_ = fl;
+            //     cout<<"TO PREV: "<<floor_<<endl;
+            // }
+        }
+    }
+    
     //==================================================
 
     // Reset preintegration from last KF (Create new object)

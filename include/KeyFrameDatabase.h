@@ -45,6 +45,7 @@ class KeyFrame;
 class Frame;
 class Map;
 class Object;
+class Floor;
 
 class KeyFrameDatabase
 {
@@ -57,6 +58,7 @@ class KeyFrameDatabase
     }
 
     unordered_map<int, vector<Object*>> h_graph_;
+    unordered_map<int, Floor*> floors_;
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -87,7 +89,11 @@ public:
 
     void getHGraph(unordered_map<int, vector<Object*>>& output) const;
 
+    Floor* getFloor(int label);
 
+    void addFloor(int label, KeyFrame* kf);
+
+    void refineObjects();
 protected:
 
    // Associated vocabulary

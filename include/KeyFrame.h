@@ -434,6 +434,7 @@ public:
     std::vector <KeyFrame*> mvpLoopCandKFs;
     std::vector <KeyFrame*> mvpMergeCandKFs;
 
+
     //bool mbHasHessian;
     //cv::Mat mHessianPose;
 
@@ -549,6 +550,7 @@ public:
         cout << "Point distribution in KeyFrame: left-> " << left << " --- right-> " << right << endl;
     }
 
+    Eigen::VectorXf getPoseWithNormal();
 
 };
 

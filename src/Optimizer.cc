@@ -1592,6 +1592,8 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
             const g2o::Sim3 Sji = Sjw * Swi;
 
             g2o::EdgeSim3* e = new g2o::EdgeSim3();
+            if(optimizer.vertex(nIDj) == NULL || optimizer.vertex(nIDi) == NULL)
+                continue;
             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDj)));
             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDi)));
             e->setMeasurement(Sji);
@@ -1639,6 +1641,8 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
             g2o::Sim3 Sji = Sjw * Swi;
 
             g2o::EdgeSim3* e = new g2o::EdgeSim3();
+            if(optimizer.vertex(nIDj) == NULL || optimizer.vertex(nIDi) == NULL)
+                continue;
             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDj)));
             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDi)));
             e->setMeasurement(Sji);
@@ -1664,6 +1668,8 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
 
                 g2o::Sim3 Sli = Slw * Swi;
                 g2o::EdgeSim3* el = new g2o::EdgeSim3();
+                if(optimizer.vertex(pLKF->mnId) == NULL || optimizer.vertex(nIDi) == NULL)
+                    continue;
                 el->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pLKF->mnId)));
                 el->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDi)));
                 el->setMeasurement(Sli);
@@ -1696,6 +1702,8 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
                     g2o::Sim3 Sni = Snw * Swi;
 
                     g2o::EdgeSim3* en = new g2o::EdgeSim3();
+                    if(optimizer.vertex(pKFn->mnId) == NULL || optimizer.vertex(nIDi) == NULL)
+                        continue;
                     en->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFn->mnId)));
                     en->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDi)));
                     en->setMeasurement(Sni);
@@ -1717,6 +1725,8 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
 
             g2o::Sim3 Spi = Spw * Swi;
             g2o::EdgeSim3* ep = new g2o::EdgeSim3();
+            if(optimizer.vertex(pKF->mPrevKF->mnId) == NULL || optimizer.vertex(nIDi) == NULL)
+                continue;
             ep->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKF->mPrevKF->mnId)));
             ep->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDi)));
             ep->setMeasurement(Spi);
@@ -1957,6 +1967,8 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
                 g2o::Sim3 Sji = Sjw * Swi;
 
                 g2o::EdgeSim3* e = new g2o::EdgeSim3();
+                if(optimizer.vertex(nIDj) == NULL || optimizer.vertex(nIDi) == NULL)
+                    continue;
                 e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDj)));
                 e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDi)));
                 e->setMeasurement(Sji);
@@ -1994,6 +2006,8 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
                 {
                     g2o::Sim3 Sli = Slw * Swi;
                     g2o::EdgeSim3* el = new g2o::EdgeSim3();
+                    if(optimizer.vertex(pLKF->mnId) == NULL || optimizer.vertex(nIDi) == NULL)
+                        continue;
                     el->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pLKF->mnId)));
                     el->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDi)));
                     el->setMeasurement(Sli);
@@ -2033,6 +2047,8 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
                         g2o::Sim3 Sni = Snw * Swi;
 
                         g2o::EdgeSim3* en = new g2o::EdgeSim3();
+                        if(optimizer.vertex(pKFn->mnId) == NULL || optimizer.vertex(nIDi) == NULL)
+                            continue;
                         en->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFn->mnId)));
                         en->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(nIDi)));
                         en->setMeasurement(Sni);

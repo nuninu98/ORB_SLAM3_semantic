@@ -9,8 +9,11 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/common/transforms.h>
 #include <Eigen/StdVector>
+#include <deque>
 #include "KeyFrame.h"
 #include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/segmentation/sac_segmentation.h>
+
 using namespace std;
 EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Matrix4f)
 namespace ORB_SLAM3{
@@ -43,7 +46,7 @@ namespace ORB_SLAM3{
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
             Detection();
 
-            Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name, string content = "");
+            Detection(const cv::Rect& roi, const cv::Mat& mask, const string& name);
 
             ~Detection();   
 
@@ -53,7 +56,7 @@ namespace ORB_SLAM3{
 
             string getClassName() const;
 
-            string getContent() const; // only for room number
+            //string getContent() const; // only for room number
 
             void copyContent(const OCRDetection& ocr_output);
 
@@ -68,7 +71,7 @@ namespace ORB_SLAM3{
             cv::Rect roi_;
             cv::Mat mask_;
             string name_;
-            string content_;
+            //string content_;
             pcl::PointCloud<pcl::PointXYZRGB> cloud_;
             DetectionGroup* dg_;
             
@@ -133,6 +136,24 @@ namespace ORB_SLAM3{
             void setKeyFrame(KeyFrame* kf);
 
             KeyFrame* getKeyFrame() const;
+    };
+
+    class Floor{
+        private:
+            KeyFrame* plane_kf_;
+            deque<KeyFrame*> kfs_;
+            int label_;
+            void refine();
+        public:
+            Floor(int label, KeyFrame* kf);
+            ~Floor();
+
+            void addKeyFrame(KeyFrame* kf);
+
+            Eigen::VectorXf getPlane();
+
+            bool isInlier(KeyFrame* kf);
+
     };
 }
 
