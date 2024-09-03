@@ -272,6 +272,7 @@ void LoopClosing::Run()
 
 #endif
                         CorrectLoop();
+                        
 #ifdef REGISTER_TIMES
                         std::chrono::steady_clock::time_point time_EndLoop = std::chrono::steady_clock::now();
 
@@ -280,6 +281,7 @@ void LoopClosing::Run()
 #endif
 
                         mnNumCorrection += 1;
+                        mpKeyFrameDB->refineObjects(); //TEST!
                     }
 
                     // Reset all variables
@@ -489,6 +491,7 @@ bool LoopClosing::NewDetectCommonRegions()
         std::chrono::steady_clock::time_point time_StartQuery = std::chrono::steady_clock::now();
 #endif
         mpKeyFrameDB->DetectNBestCandidates(mpCurrentKF, vpLoopBowCand, vpMergeBowCand,3);
+        
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_EndQuery = std::chrono::steady_clock::now();
 
@@ -505,6 +508,8 @@ bool LoopClosing::NewDetectCommonRegions()
     if(!bLoopDetectedInKF && !vpLoopBowCand.empty())
     {
         mbLoopDetected = DetectCommonRegionsFromBoW(vpLoopBowCand, mpLoopMatchedKF, mpLoopLastCurrentKF, mg2oLoopSlw, mnLoopNumCoincidences, mvpLoopMPs, mvpLoopMatchedMPs);
+        // cout<<"COMMON REGION?: "<<mbLoopDetected<<endl;
+        // cout<<"====="<<endl;
     }
     // Merge candidates
     if(!bMergeDetectedInKF && !vpMergeBowCand.empty())
@@ -690,6 +695,7 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
 
         if(numBoWMatches >= nBoWMatches) // TODO pick a good threshold
         {
+            //cout<<"SUFFICIENT BOW MATCH"<<endl;
             // Geometric validation
             bool bFixedScale = mbFixScale;
             if(mpTracker->mSensor==System::IMU_MONOCULAR && !mpCurrentKF->GetMap()->GetIniertialBA2())

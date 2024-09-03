@@ -10,6 +10,7 @@
 #include <pcl/common/transforms.h>
 #include <Eigen/StdVector>
 #include <deque>
+#include <unordered_set>
 #include "KeyFrame.h"
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/segmentation/sac_segmentation.h>
@@ -96,6 +97,10 @@ namespace ORB_SLAM3{
             void addDetection(const Detection* det);
         
             void getConnectedKeyFrames(vector<KeyFrame*>& output) const;
+        
+            Eigen::Vector3f getCentroid() const;
+
+            void merge(Object* obj);
         private:
             string name_;
             vector<const Detection*> seens_;
@@ -143,16 +148,19 @@ namespace ORB_SLAM3{
             KeyFrame* plane_kf_;
             deque<KeyFrame*> kfs_;
             int label_;
-            void refine();
+            
         public:
             Floor(int label, KeyFrame* kf);
             ~Floor();
 
+            void refine();
+            
             void addKeyFrame(KeyFrame* kf);
 
-            Eigen::VectorXf getPlane();
 
             bool isInlier(KeyFrame* kf);
+
+            
 
     };
 }

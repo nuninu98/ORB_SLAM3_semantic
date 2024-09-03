@@ -3282,9 +3282,8 @@ void Tracking::CreateNewKeyFrame(const vector<DetectionGroup>& detections)
 
     if(!mpLocalMapper->SetNotStop(true))
         return;
-
     KeyFrame* pKF = new KeyFrame(mCurrentFrame,mpAtlas->GetCurrentMap(),mpKeyFrameDB);
-    
+
     if(mpAtlas->isImuInitialized()) //  || mpLocalMapper->IsInitializing())
         pKF->bImu = true;
 
@@ -3310,28 +3309,29 @@ void Tracking::CreateNewKeyFrame(const vector<DetectionGroup>& detections)
     }
     else{
         Floor* curr_floor = mpKeyFrameDB->getFloor(floor_);
+        curr_floor->refine();
         if(curr_floor->isInlier(pKF)){
             //cout<<"ADD TO FLOOR: "<<floor_<<endl;
             pKF->setFloor(floor_);
             curr_floor->addKeyFrame(pKF);
         }
         else{ // create new keyframe
-            // int fl = -1;
-            // for(int i = floor_; i >= 0; --i){
-            //     Floor* prev_floor = mpKeyFrameDB->getFloor(i);
-            //     if(prev_floor->isInlier(pKF)){
-            //         fl = i;
-            //         break;
-            //     }
-            // }
-            // if(fl == -1){
+            int fl = -1;
+            for(int i = floor_; i >= 1; --i){
+                Floor* prev_floor = mpKeyFrameDB->getFloor(i);
+                if(prev_floor->isInlier(pKF)){
+                    fl = i;
+                    break;
+                }
+            }
+            if(fl == -1){
                 floor_++;
                 cout<<"NEW FLOOR: "<<floor_<<endl;
-            // }
-            // else{
-            //     floor_ = fl;
-            //     cout<<"TO PREV: "<<floor_<<endl;
-            // }
+            }
+            else{
+                floor_ = fl;
+                cout<<"TO PREV: "<<floor_<<endl;
+            }
         }
     }
     

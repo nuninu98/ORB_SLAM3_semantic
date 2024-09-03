@@ -1179,25 +1179,5 @@ void KeyFrame::getDetection(vector<const DetectionGroup*>& output) const{
     }
 }
 
-Eigen::VectorXf KeyFrame::getPoseWithNormal(){
-    Eigen::Matrix4f pose = GetPoseInverse().matrix();
-    float x = pose(0, 3);
-    float y = pose(1, 3);
-    float z = pose(2, 3);
-   
-    Eigen::Matrix3f rot = pose.block<3, 3>(0, 0);
-    Eigen::Vector3f v(0.0, -1.0, 0.0);
-    Eigen::Vector3f normal = rot * v;
-    Eigen::VectorXf output = Eigen::VectorXf::Zero(6);
-   
-    output(0) = x;
-    output(1) = y;
-    output(2) = z;
-    output(3) = normal(0);
-    output(4) = normal(1);
-    output(5) = normal(2);
-    
-    return output;
-}
 
 } //namespace ORB_SLAM

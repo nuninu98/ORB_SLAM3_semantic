@@ -211,6 +211,26 @@ namespace ORB_SLAM3{
         }
     }
 
+    Eigen::Vector3f Object::getCentroid() const{
+        Eigen::Vector3f centroid;
+        pcl::PointCloud<pcl::PointXYZRGB> cloud;
+        getCloud(cloud);
+
+        pcl::PointXYZRGB cent;
+        pcl::computeCentroid(cloud, cent);
+
+        centroid(0) = cent.x;
+        centroid(1) = cent.y;
+        centroid(2) = cent.z;
+        return centroid;
+    }
+
+    void Object::merge(Object* obj){
+        for(const auto& elem : obj->seens_){
+            seens_.push_back(elem);
+        }
+    }
+
     //=====================DetectionGroup================
     DetectionGroup::DetectionGroup(){}
 
@@ -286,7 +306,7 @@ namespace ORB_SLAM3{
         if(kfs_.empty()){
             return;
         }
-        float err_thresh = 0.7;
+        float err_thresh = 0.5;
         float inlier_r = 0.8;
         float prob = 0.95;
 
@@ -296,16 +316,20 @@ namespace ORB_SLAM3{
 
         for(int i = 0; i < iter; ++i){
             int id = rand() % kfs_.size();
-            float a = kfs_[id]->getPoseWithNormal()(3); // ax+by+cz+d = 0
-            float b = kfs_[id]->getPoseWithNormal()(4);
-            float c = kfs_[id]->getPoseWithNormal()(5);
-            float d = -(a*kfs_[id]->getPoseWithNormal()(0) + b*kfs_[id]->getPoseWithNormal()(1) + c*kfs_[id]->getPoseWithNormal()(2));
+            Eigen::Matrix4f plane_se3 = kfs_[id]->GetPoseInverse().matrix();
+            // float a = kfs_[id]->getPoseWithNormal()(3); // ax+by+cz+d = 0
+            // float b = kfs_[id]->getPoseWithNormal()(4);
+            // float c = kfs_[id]->getPoseWithNormal()(5);
+            // float d = -(a*kfs_[id]->getPoseWithNormal()(0) + b*kfs_[id]->getPoseWithNormal()(1) + c*kfs_[id]->getPoseWithNormal()(2));
             int inliers = 0;
             for(int j = 0; j < kfs_.size(); ++j){
-                float x = kfs_[j]->getPoseWithNormal()(0);
-                float y = kfs_[j]->getPoseWithNormal()(1);
-                float z = kfs_[j]->getPoseWithNormal()(2);
-                float dist = abs(a*x + b*y + c*z + d) / sqrt(a*a + b*b + c*c);
+                Eigen::Matrix4f kf_se3 = kfs_[j]->GetPoseInverse().matrix();
+                Eigen::Matrix4f delta = plane_se3.inverse() * kf_se3;
+                float dist = abs(delta(1, 3));
+                // float x = kfs_[j]->getPoseWithNormal()(0);
+                // float y = kfs_[j]->getPoseWithNormal()(1);
+                // float z = kfs_[j]->getPoseWithNormal()(2);
+                // float dist = abs(a*x + b*y + c*z + d) / sqrt(a*a + b*b + c*c);
                 if(dist < err_thresh){
                     inliers++;
                 }
@@ -323,43 +347,26 @@ namespace ORB_SLAM3{
 
     }
 
-    Eigen::VectorXf Floor::getPlane(){
-        refine();
-        Eigen::VectorXf output = Eigen::VectorXf::Zero(6);
-        if(plane_kf_ != nullptr){
-            output = plane_kf_->getPoseWithNormal();
-        }   
-        return output;
-    }
-
     bool Floor::isInlier(KeyFrame* kf){
         
-        Eigen::VectorXf plane = plane_kf_->getPoseWithNormal();
-        float a = plane(3); // ax+by+cz+d = 0
-        float b = plane(4);
-        float c = plane(5);
-        float d = -(a*plane(0) + b*plane(1) + c*plane(2));
+        // Eigen::VectorXf plane = plane_kf_->getPoseWithNormal();
+        // float a = plane(3); // ax+by+cz+d = 0
+        // float b = plane(4);
+        // float c = plane(5);
+        // float d = -(a*plane(0) + b*plane(1) + c*plane(2));
 
-        Eigen::VectorXf point = kf->getPoseWithNormal();
-        float x = point(0);
-        float y = point(1);
-        float z = point(2);
-        float dist = abs(a*x + b*y + c*z + d) / sqrt(a*a + b*b + c*c);
+        // Eigen::VectorXf point = kf->getPoseWithNormal();
+        // float x = point(0);
+        // float y = point(1);
+        // float z = point(2);
+        Eigen::Matrix4f plane_se3 = plane_kf_->GetPoseInverse().matrix();
+        Eigen::Matrix4f kf_se3 = kf->GetPoseInverse().matrix();
+        Eigen::Matrix4f delta = plane_se3.inverse() * kf_se3;
+        float dist = abs(delta(1, 3));//abs(a*x + b*y + c*z + d) / sqrt(a*a + b*b + c*c);
         bool res = dist < 1.5;
         if(!res){
-            cout<<"DIST ERR: "<<dist<<endl;
+            cout<<"DIST ERR: "<<dist<<" kf: "<<kf->mnId<<endl;
         }
         return res;
-        // Eigen::VectorXf plane = plane_kf_->getPoseWithNormal();
-        // Eigen::Vector3f point = plane.block<3, 1>(0, 0);
-        // Eigen::Vector3f norm = plane.block<3, 1>(0, 3).normalized();
-        
-        // Eigen::Vector3f kf_trans = kf->getPoseWithNormal().block<3, 1>(0, 0);
-        // float d = abs(norm.dot(kf_trans - point));
-        // bool res = d < 0.7;
-        // if(!res){
-        //     cout<<"DIST ERR: "<<d<<endl;
-        // }
-        // return res;
     }
 }

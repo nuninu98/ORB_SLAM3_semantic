@@ -57,6 +57,8 @@ class KeyFrameDatabase
         ar & mvBackupInvertedFileId;
     }
 
+    mutex lock_h_graph_;
+
     unordered_map<int, vector<Object*>> h_graph_;
     unordered_map<int, Floor*> floors_;
 public:
@@ -87,7 +89,7 @@ public:
     void PostLoad(map<long unsigned int, KeyFrame*> mpKFid);
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
 
-    void getHGraph(unordered_map<int, vector<Object*>>& output) const;
+    void getHGraph(unordered_map<int, vector<Object*>>& output) ;
 
     Floor* getFloor(int label);
 

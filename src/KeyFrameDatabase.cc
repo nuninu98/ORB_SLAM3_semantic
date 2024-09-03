@@ -58,15 +58,12 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
         Eigen::Matrix4f cam_in_map = pKF->GetPoseInverse().matrix()* dg->getSensorPose();
         for(auto& det : detections){
             cv::Rect box_est;
-            double max_score = 1.0;
+            float max_score = 1.0;
             int idx = -1;
             
             for(int i = 0; i < tgt_objs.size(); ++i){   
                 if(det->getClassName() == tgt_objs[i]->getClassName()){
-                    pcl::PointXYZRGB obj_centroid;
-                    pcl::PointCloud<pcl::PointXYZRGB> obj_cloud;
-                    tgt_objs[i]->getCloud(obj_cloud);
-                    pcl::computeCentroid(obj_cloud, obj_centroid);
+                    Eigen::Vector3f obj_centroid = tgt_objs[i]->getCentroid();
                     //=============IOU Method================
                     // tgt_objs[i]->getEstBbox(K, cam_in_map, box_est);
                     // cv::Rect common = box_est & det->getRoI();
@@ -85,8 +82,8 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
                     pcl::PointXYZRGB det_centroid;
                     pcl::computeCentroid(cloud_tf, det_centroid);
 
-                    double dist = sqrt(pow(det_centroid.x- obj_centroid.x, 2) + pow(det_centroid.y- obj_centroid.y, 2) + pow(det_centroid.z- obj_centroid.z, 2));
-                    double score = 1.0 / dist;
+                    float dist = sqrt(pow(det_centroid.x- obj_centroid(0), 2) + pow(det_centroid.y- obj_centroid(1), 2) + pow(det_centroid.z- obj_centroid(2), 2));
+                    float score = 1.0 / dist;
                     if(score > max_score){
                         max_score = score;
                         idx = i;
@@ -940,7 +937,8 @@ void KeyFrameDatabase::SetORBVocabulary(ORBVocabulary* pORBVoc)
     mvInvertedFile.resize(mpVoc->size());
 }
 
-void KeyFrameDatabase::getHGraph(unordered_map<int, vector<Object*>>& output) const{
+void KeyFrameDatabase::getHGraph(unordered_map<int, vector<Object*>>& output){
+    unique_lock<mutex> lock(lock_h_graph_);
     output = h_graph_;
 }
 
@@ -960,7 +958,34 @@ void KeyFrameDatabase::addFloor(int label, KeyFrame* kf){
 }
 
 void KeyFrameDatabase::refineObjects(){
-
+    unique_lock<mutex> lock(lock_h_graph_);
+    for(auto& fo_pair: h_graph_){
+        vector<Object*> refined;
+        for(int i = 0; i < fo_pair.second.size(); ++i){
+            Object* obj1 = fo_pair.second[i];
+            Eigen::Vector3f p1 = obj1->getCentroid();
+            Object* to_merge = nullptr;
+            float dist_min = 1.0;
+            for(const auto& obj2 : refined){
+                if(obj1->getClassName() == obj2->getClassName()){
+                    Eigen::Vector3f p2 = obj2->getCentroid();
+                    if((p1 - p2).norm() < dist_min){
+                        to_merge = obj2;
+                        dist_min = (p1 - p2).norm();
+                    }
+                }
+            }
+            if(to_merge == nullptr){
+                refined.push_back(obj1);
+            }
+            else{ //merge
+                to_merge->merge(obj1);
+                delete obj1;
+            }
+        }
+        fo_pair.second = refined;
+    }
+    
 }
 
 } //namespace ORB_SLAM

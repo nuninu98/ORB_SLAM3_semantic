@@ -550,8 +550,6 @@ public:
         cout << "Point distribution in KeyFrame: left-> " << left << " --- right-> " << right << endl;
     }
 
-    Eigen::VectorXf getPoseWithNormal();
-
 };
 
 } //namespace ORB_SLAM
