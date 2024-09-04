@@ -98,6 +98,7 @@ src/TwoViewReconstruction.cc
 src/Config.cc
 src/Settings.cc
 src/DataType.cc
+src/HGraph.cc
 include/System.h
 include/Tracking.h
 include/LocalMapping.h
@@ -129,6 +130,7 @@ include/SerializationUtils.h
 include/Config.h
 include/Settings.h
 include/DataType.h
+include/HGraph.h
 )
 
 add_subdirectory(Thirdparty/g2o)

@@ -48,7 +48,7 @@ class MapPoint;
 class Frame;
 class KeyFrameDatabase;
 class DetectionGroup;
-
+class Floor;
 class GeometricCamera;
 
 class KeyFrame
@@ -194,7 +194,7 @@ class KeyFrame
         ar & mbHasVelocity;
     }
 
-    int floor_ = -1;
+    Floor* floor_ = nullptr;
     vector<DetectionGroup> detections_;
 
 public:
@@ -308,9 +308,9 @@ public:
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
     void SetKeyFrameDatabase(KeyFrameDatabase* pKFDB);
 
-    void setFloor(int val);
+    void setFloor(Floor* floor);
 
-    int getFloor() const;
+    Floor* getFloor() const;
 
     void setDetection(const vector<DetectionGroup>& dets);
 

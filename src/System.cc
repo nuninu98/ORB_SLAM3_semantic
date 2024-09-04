@@ -1626,8 +1626,9 @@ vector<KeyFrame*> System::getKeyframes(){
 }
 
 
-void System::getHierarchyGraph(unordered_map<int, vector<Object*>>& output) const{
-    mpKeyFrameDatabase->getHGraph(output);
+const HGraph* System::getHierarchyGraph(){
+    return mpKeyFrameDatabase->getHGraph();
+    //mpKeyFrameDatabase->getHGraph(output);
 }
 
 void System::getMapPointCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const{

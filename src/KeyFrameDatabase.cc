@@ -33,6 +33,7 @@ KeyFrameDatabase::KeyFrameDatabase (const ORBVocabulary &voc):
     mpVoc(&voc)
 {
     mvInvertedFile.resize(voc.size());
+    h_graph_ = new HGraph();
 }
 
 
@@ -44,10 +45,10 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
         mvInvertedFile[vit->first].push_back(pKF);
     }
     //==============Add hierarchy graph============
-    if(h_graph_.find(pKF->getFloor()) == h_graph_.end()){
-        h_graph_.insert(make_pair(pKF->getFloor(), vector<Object*>()));
-    }
-    vector<Object*> tgt_objs = h_graph_[pKF->getFloor()];
+    // if(h_graph_.find(pKF->getFloor()) == h_graph_.end()){
+    //     h_graph_.insert(make_pair(pKF->getFloor(), vector<Object*>()));
+    // }
+    //vector<Object*> tgt_objs = h_graph_[pKF->getFloor()];
     vector<const DetectionGroup*> kf_dets;
     pKF->getDetection(kf_dets);
     for(const auto& dg : kf_dets){
@@ -60,9 +61,9 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
             cv::Rect box_est;
             float max_score = 1.0;
             int idx = -1;
-            
+            vector<Object*> tgt_objs = h_graph_->getObjects(pKF->getFloor(), det->getClassName());
             for(int i = 0; i < tgt_objs.size(); ++i){   
-                if(det->getClassName() == tgt_objs[i]->getClassName()){
+                //if(det->getClassName() == tgt_objs[i]->getClassName()){
                     Eigen::Vector3f obj_centroid = tgt_objs[i]->getCentroid();
                     //=============IOU Method================
                     // tgt_objs[i]->getEstBbox(K, cam_in_map, box_est);
@@ -89,7 +90,7 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
                         idx = i;
                     }
                     //=======================================
-                }
+                //}
             }
 
             if(idx != -1){ // matched
@@ -109,7 +110,7 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
                     pcl::transformPointCloud(cloud, cloud_tf, cam_in_map);
                     Object* new_obj = new Object(det->getClassName());
                     new_obj->addDetection(det);
-                    h_graph_[pKF->getFloor()].push_back(new_obj);
+                    h_graph_->insert(pKF->getFloor(), new_obj);
                 }
                
             }
@@ -146,12 +147,6 @@ void KeyFrameDatabase::clear()
 {
     mvInvertedFile.clear();
     mvInvertedFile.resize(mpVoc->size());
-    for(const auto& fo_pair: h_graph_){
-        for(const auto& elem : fo_pair.second){
-            delete elem;
-        }
-    }
-    h_graph_.clear();
 }
 
 void KeyFrameDatabase::clearMap(Map* pMap)
@@ -937,54 +932,56 @@ void KeyFrameDatabase::SetORBVocabulary(ORBVocabulary* pORBVoc)
     mvInvertedFile.resize(mpVoc->size());
 }
 
-void KeyFrameDatabase::getHGraph(unordered_map<int, vector<Object*>>& output){
-    unique_lock<mutex> lock(lock_h_graph_);
-    output = h_graph_;
+const HGraph* KeyFrameDatabase::getHGraph(){
+    unique_lock<mutex> lock(mMutex);
+    return h_graph_;
 }
 
-Floor* KeyFrameDatabase::getFloor(int label){
-    if(floors_.find(label) == floors_.end()){
-        return nullptr;
-    }
-    return floors_[label];
-}
+// Floor* KeyFrameDatabase::getFloor(int label){
+//     if(floors_.find(label) == floors_.end()){
+//         return nullptr;
+//     }
+//     return floors_[label];
+// }
 
-void KeyFrameDatabase::addFloor(int label, KeyFrame* kf){
-    if(floors_.find(label) != floors_.end()){
-        return;
-    }
-    Floor* f = new Floor(label, kf);
-    floors_.insert(make_pair(label, f));
+void KeyFrameDatabase::addFloor(Floor* floor){
+    unique_lock<mutex> lock(mMutex);
+    // if(floors_.find(floor) != floors_.end()){
+    //     return;
+    // }
+    // floors_.insert(floor);
+    h_graph_->insert(floor);
 }
 
 void KeyFrameDatabase::refineObjects(){
-    unique_lock<mutex> lock(lock_h_graph_);
-    for(auto& fo_pair: h_graph_){
-        vector<Object*> refined;
-        for(int i = 0; i < fo_pair.second.size(); ++i){
-            Object* obj1 = fo_pair.second[i];
-            Eigen::Vector3f p1 = obj1->getCentroid();
-            Object* to_merge = nullptr;
-            float dist_min = 1.0;
-            for(const auto& obj2 : refined){
-                if(obj1->getClassName() == obj2->getClassName()){
-                    Eigen::Vector3f p2 = obj2->getCentroid();
-                    if((p1 - p2).norm() < dist_min){
-                        to_merge = obj2;
-                        dist_min = (p1 - p2).norm();
-                    }
-                }
-            }
-            if(to_merge == nullptr){
-                refined.push_back(obj1);
-            }
-            else{ //merge
-                to_merge->merge(obj1);
-                delete obj1;
-            }
-        }
-        fo_pair.second = refined;
-    }
+     unique_lock<mutex> lock(mMutex);
+    h_graph_->refineObject();
+    // for(auto& fo_pair: h_graph_){
+    //     vector<Object*> refined;
+    //     for(int i = 0; i < fo_pair.second.size(); ++i){
+    //         Object* obj1 = fo_pair.second[i];
+    //         Eigen::Vector3f p1 = obj1->getCentroid();
+    //         Object* to_merge = nullptr;
+    //         float dist_min = 1.0;
+    //         for(const auto& obj2 : refined){
+    //             if(obj1->getClassName() == obj2->getClassName()){
+    //                 Eigen::Vector3f p2 = obj2->getCentroid();
+    //                 if((p1 - p2).norm() < dist_min){
+    //                     to_merge = obj2;
+    //                     dist_min = (p1 - p2).norm();
+    //                 }
+    //             }
+    //         }
+    //         if(to_merge == nullptr){
+    //             refined.push_back(obj1);
+    //         }
+    //         else{ //merge
+    //             to_merge->merge(obj1);
+    //             delete obj1;
+    //         }
+    //     }
+    //     fo_pair.second = refined;
+    // }
     
 }
 

@@ -56,7 +56,8 @@ class Settings;
 class Tracking
 {  
 private:
-    int floor_ = -1;
+    Floor* floor_;
+    //int floor_ = -1;
     bool* kf_flag_;
     condition_variable* kf_cv_;
 

@@ -293,7 +293,10 @@ namespace ORB_SLAM3{
     }
 
     void Floor::addKeyFrame(KeyFrame* kf){
-        kf->setFloor(label_);
+        if(kf == nullptr){
+            cout<<"INSERT NULL"<<endl;
+        }
+        kf->setFloor(this);
         kfs_.push_back(kf);
         if(kfs_.size() > 1000){
             kfs_.pop_front();
@@ -316,6 +319,9 @@ namespace ORB_SLAM3{
 
         for(int i = 0; i < iter; ++i){
             int id = rand() % kfs_.size();
+            if(kfs_[id] == nullptr){
+                cout<<"XXXX"<<endl;
+            }
             Eigen::Matrix4f plane_se3 = kfs_[id]->GetPoseInverse().matrix();
             // float a = kfs_[id]->getPoseWithNormal()(3); // ax+by+cz+d = 0
             // float b = kfs_[id]->getPoseWithNormal()(4);
@@ -323,6 +329,9 @@ namespace ORB_SLAM3{
             // float d = -(a*kfs_[id]->getPoseWithNormal()(0) + b*kfs_[id]->getPoseWithNormal()(1) + c*kfs_[id]->getPoseWithNormal()(2));
             int inliers = 0;
             for(int j = 0; j < kfs_.size(); ++j){
+                if(kfs_[j] == nullptr){
+                    cout<<"YYYY"<<endl;
+                }
                 Eigen::Matrix4f kf_se3 = kfs_[j]->GetPoseInverse().matrix();
                 Eigen::Matrix4f delta = plane_se3.inverse() * kf_se3;
                 float dist = abs(delta(1, 3));

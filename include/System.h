@@ -196,7 +196,7 @@ public:
 
     vector<KeyFrame*> getKeyframes();
 
-    void getHierarchyGraph(unordered_map<int, vector<Object*>>& output) const;
+    const HGraph* getHierarchyGraph();
 
     void getMapPointCloud(pcl::PointCloud<pcl::PointXYZRGB>& output) const;
 #ifdef REGISTER_TIMES

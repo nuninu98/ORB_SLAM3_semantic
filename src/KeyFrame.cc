@@ -567,6 +567,7 @@ void KeyFrame::SetErase()
     if(mbToBeErased)
     {
         SetBadFlag();
+        cout<<"ERASE?"<<endl;
     }
 }
 
@@ -1156,11 +1157,11 @@ void KeyFrame::SetKeyFrameDatabase(KeyFrameDatabase* pKFDB)
     mpKeyFrameDB = pKFDB;
 }
 
-void KeyFrame::setFloor(int val){
-    floor_ = val;
+void KeyFrame::setFloor(Floor* floor){
+    floor_ = floor;
 }
 
-int KeyFrame::getFloor() const{
+Floor* KeyFrame::getFloor() const{
     return floor_;
 }
 

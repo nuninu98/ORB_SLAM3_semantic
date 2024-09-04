@@ -29,6 +29,7 @@
 #include "ORBVocabulary.h"
 #include "Map.h"
 #include "DataType.h"
+#include "HGraph.h"
 
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
@@ -46,7 +47,7 @@ class Frame;
 class Map;
 class Object;
 class Floor;
-
+class HGraph;
 class KeyFrameDatabase
 {
     friend class boost::serialization::access;
@@ -57,10 +58,11 @@ class KeyFrameDatabase
         ar & mvBackupInvertedFileId;
     }
 
-    mutex lock_h_graph_;
+    //mutex lock_h_graph_;
 
-    unordered_map<int, vector<Object*>> h_graph_;
-    unordered_map<int, Floor*> floors_;
+    HGraph* h_graph_;
+    //unordered_map<Floor*, vector<Object*>> h_graph_;
+    //unordered_set<Floor*> floors_;
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -89,11 +91,11 @@ public:
     void PostLoad(map<long unsigned int, KeyFrame*> mpKFid);
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
 
-    void getHGraph(unordered_map<int, vector<Object*>>& output) ;
+    const HGraph* getHGraph();
 
-    Floor* getFloor(int label);
+    // Floor* getFloor(int label);
 
-    void addFloor(int label, KeyFrame* kf);
+    void addFloor(Floor* floor);
 
     void refineObjects();
 protected:

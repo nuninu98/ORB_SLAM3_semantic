@@ -46,7 +46,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mbOnlyTracking(false), mbMapUpdated(false), mbVO(false), mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB),
     mbReadyToInitializate(false), mpSystem(pSys), mpViewer(NULL), bStepByStep(false),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas), mnLastRelocFrameId(0), time_recently_lost(5.0),
-    mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame*>(NULL)), floor_(1),
+    mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame*>(NULL)), floor_(nullptr),
     kf_flag_(nullptr), kf_cv_(nullptr)
 {
     // Load camera parameters from settings file
@@ -3302,36 +3302,38 @@ void Tracking::CreateNewKeyFrame(const vector<DetectionGroup>& detections)
     //========== Add Hierarchy Graph====================
     //pKF->setFloor(floor_);
     pKF->setDetection(detections);
-    if(mpKeyFrameDB->getFloor(floor_) == nullptr){
-        cout<<"GENERATE FLOOR: "<<floor_<<endl;
+    if(floor_ == nullptr){
+        floor_ = new Floor(0, pKF);
+        cout<<"GENERATE FLOOR: "<<endl;
         pKF->setFloor(floor_);
-        mpKeyFrameDB->addFloor(floor_, pKF);
+        mpKeyFrameDB->addFloor(floor_);
     }
     else{
-        Floor* curr_floor = mpKeyFrameDB->getFloor(floor_);
-        curr_floor->refine();
-        if(curr_floor->isInlier(pKF)){
+        floor_->refine();
+        if(floor_->isInlier(pKF)){
             //cout<<"ADD TO FLOOR: "<<floor_<<endl;
             pKF->setFloor(floor_);
-            curr_floor->addKeyFrame(pKF);
+            floor_->addKeyFrame(pKF);
         }
-        else{ // create new keyframe
-            int fl = -1;
-            for(int i = floor_; i >= 1; --i){
-                Floor* prev_floor = mpKeyFrameDB->getFloor(i);
-                if(prev_floor->isInlier(pKF)){
-                    fl = i;
-                    break;
-                }
-            }
-            if(fl == -1){
-                floor_++;
-                cout<<"NEW FLOOR: "<<floor_<<endl;
-            }
-            else{
-                floor_ = fl;
-                cout<<"TO PREV: "<<floor_<<endl;
-            }
+        else{
+            floor_ = nullptr; 
+            // create new keyframe
+            // int fl = -1;
+            // for(int i = floor_; i >= 1; --i){
+            //     Floor* prev_floor = mpKeyFrameDB->getFloor(i);
+            //     if(prev_floor->isInlier(pKF)){
+            //         fl = i;
+            //         break;
+            //     }
+            // }
+            // if(fl == -1){
+            //     floor_++;
+            //     cout<<"NEW FLOOR: "<<floor_<<endl;
+            // }
+            // else{
+            //     floor_ = fl;
+            //     cout<<"TO PREV: "<<floor_<<endl;
+            // }
         }
     }
     
