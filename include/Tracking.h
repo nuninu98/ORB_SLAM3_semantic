@@ -55,7 +55,9 @@ class Settings;
 
 class Tracking
 {  
-
+private:
+    bool* kf_flag_ = nullptr;
+    condition_variable* kf_cv_;
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Atlas* pAtlas,
@@ -107,6 +109,8 @@ public:
     void SaveSubTrajectory(string strNameFile_frames, string strNameFile_kf, Map* pMap);
 
     float GetImageScale();
+
+    void registerKeyframeCall(bool* kf_flag, condition_variable* kf_cv);
 
 #ifdef REGISTER_LOOP
     void RequestStop();

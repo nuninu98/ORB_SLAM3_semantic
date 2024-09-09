@@ -1546,5 +1546,13 @@ string System::CalculateCheckSum(string filename, int type)
     return checksum;
 }
 
+    void System::registerKeyframeCall(bool* kf_flag, condition_variable* kf_cv){
+        mpTracker->registerKeyframeCall(kf_flag, kf_cv);
+    }
+
+    KeyFrame* System::getLastKF() const{
+        return mpTracker->GetLastKeyFrame();
+    }
+
 } //namespace ORB_SLAM
 

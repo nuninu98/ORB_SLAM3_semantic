@@ -27,6 +27,7 @@
 #include<string>
 #include<thread>
 #include<opencv2/core/core.hpp>
+#include <condition_variable>
 
 #include "Tracking.h"
 #include "FrameDrawer.h"
@@ -192,6 +193,9 @@ public:
     void InsertTrackTime(double& time);
 #endif
 
+    void registerKeyframeCall(bool* kf_flag ,condition_variable* kf_cv);
+
+    KeyFrame* getLastKF() const;
 private:
 
     void SaveAtlas(int type);

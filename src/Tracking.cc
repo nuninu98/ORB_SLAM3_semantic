@@ -46,7 +46,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mbOnlyTracking(false), mbMapUpdated(false), mbVO(false), mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB),
     mbReadyToInitializate(false), mpSystem(pSys), mpViewer(NULL), bStepByStep(false),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas), mnLastRelocFrameId(0), time_recently_lost(5.0),
-    mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame*>(NULL))
+    mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame*>(NULL)), kf_cv_(nullptr)
 {
     // Load camera parameters from settings file
     if(settings){
@@ -3338,6 +3338,12 @@ void Tracking::CreateNewKeyFrame()
 
     mnLastKeyFrameId = mCurrentFrame.mnId;
     mpLastKeyFrame = pKF;
+
+    if(kf_cv_ != nullptr ){
+        cout<<"pkf: "<<pKF->mnId<<endl;
+        *kf_flag_  = true;
+        kf_cv_->notify_all();
+    }
 }
 
 void Tracking::SearchLocalPoints()
@@ -4122,5 +4128,10 @@ void Tracking::Release()
     mbStopRequested = false;
 }
 #endif
+
+void Tracking::registerKeyframeCall( bool* kf_flag, condition_variable* kf_cv){
+    kf_flag_ = kf_flag;
+    kf_cv_ = kf_cv;
+}
 
 } //namespace ORB_SLAM
