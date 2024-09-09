@@ -115,4 +115,48 @@ namespace ORB_SLAM3{
         }
         return tmp;
     }
+
+    void HGraph::getMatchedKFs(KeyFrame* kf, unordered_map<KeyFrame*, float>& kf_scores){
+        Floor* kf_floor = kf->getFloor();
+        if(fl_name_objs_.find(kf_floor) == fl_name_objs_.end()){
+            return;
+        }
+        auto name_objs = fl_name_objs_[kf_floor];
+        vector<const DetectionGroup*> kf_dgs;
+        kf->getDetection(kf_dgs);
+        for(const auto& dg : kf_dgs){
+            vector<const Detection*> dets;
+            dg->detections(dets);
+            for(const auto& det : dets){
+                string name = det->getClassName();
+                if(name_objs.find(name) == name_objs.end()){
+                    continue;
+                }
+                for(const auto& obj : name_objs[name]){
+                    vector<KeyFrame*> conns;
+                    obj->getConnectedKeyFrames(conns);
+                    for(const auto& pkf : conns){
+                        unsigned long id1 = max(pkf->mnId, kf->mnId);
+                        unsigned long id2 = min(pkf->mnId, kf->mnId);
+                        if(id1 - id2 < 500){
+                            continue;
+                        }
+                        if(kf_scores.find(pkf) == kf_scores.end()){
+                            kf_scores.insert(make_pair(pkf, 0.0));
+                        }
+                        kf_scores[pkf] += 1.0 / name_objs[name].size();
+                    }
+                }
+            }
+        }
+
+    }
+
+    vector<Floor*> HGraph::floors() const{
+        vector<Floor*> output;
+        for(const auto& elem : fl_name_objs_){
+            output.push_back(elem.first);
+        }
+        return output;
+    }
 }

@@ -3317,6 +3317,14 @@ void Tracking::CreateNewKeyFrame(const vector<DetectionGroup>& detections)
         }
         else{
             floor_ = nullptr; 
+            const HGraph* h_graph = mpKeyFrameDB->getHGraph();
+            for(const auto& fl : h_graph->floors()){
+                if(fl->isInlier(pKF)){
+                    floor_ = fl;
+                    cout<<"TO PREV: "<<floor_<<endl;
+                    break;
+                }
+            }
             // create new keyframe
             // int fl = -1;
             // for(int i = floor_; i >= 1; --i){

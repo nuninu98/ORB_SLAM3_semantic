@@ -807,6 +807,11 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
     }
 }
 
+void KeyFrameDatabase::DetectSemanticCandidates(KeyFrame* pKF, unordered_map<KeyFrame*, float>& candidates){
+    unique_lock<mutex> lock(mMutex);
+    h_graph_->getMatchedKFs(pKF, candidates);
+}
+
 
 vector<KeyFrame*> KeyFrameDatabase::DetectRelocalizationCandidates(Frame *F, Map* pMap)
 {

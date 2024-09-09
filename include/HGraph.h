@@ -28,6 +28,10 @@ namespace ORB_SLAM3{
             vector<Object*> getObjects(Floor* floor, string obj_name);
     
             vector<Object*> getEveryObjects() const;
+
+            void getMatchedKFs(KeyFrame* kf, unordered_map<KeyFrame*, float>& kf_scores);
+        
+            vector<Floor*> floors() const;
         };
 
 }

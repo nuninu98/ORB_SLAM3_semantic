@@ -491,6 +491,19 @@ bool LoopClosing::NewDetectCommonRegions()
         std::chrono::steady_clock::time_point time_StartQuery = std::chrono::steady_clock::now();
 #endif
         mpKeyFrameDB->DetectNBestCandidates(mpCurrentKF, vpLoopBowCand, vpMergeBowCand,3);
+
+        //============Testing=================
+        unordered_map<KeyFrame*, float> kf_scores;
+        mpKeyFrameDB->DetectSemanticCandidates(mpCurrentKF, kf_scores);
+        
+        if(!kf_scores.empty()){
+            // cout<<"KF MATCHES: ";
+            // for(const auto& elem : kf_scores){
+            //     cout<<(elem.first->mnId)<<" : "<<elem.second<<endl;
+            // }
+            // cout<<"\n===="<<endl;
+        }
+        //====================================
         
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_EndQuery = std::chrono::steady_clock::now();
