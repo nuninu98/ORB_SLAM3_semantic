@@ -1558,7 +1558,11 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
 #endif
 
     Track();
-
+    //=======Debug========
+    // mpLastKeyFrame->color_ = imRGB.clone();
+    // mpLastKeyFrame->depth_ = imDepth.clone();
+    //=======Debug========
+    
     return mCurrentFrame.GetPose();
 }
 
@@ -3340,7 +3344,6 @@ void Tracking::CreateNewKeyFrame()
     mpLastKeyFrame = pKF;
 
     if(kf_cv_ != nullptr ){
-        cout<<"pkf: "<<pKF->mnId<<endl;
         *kf_flag_  = true;
         kf_cv_->notify_all();
     }

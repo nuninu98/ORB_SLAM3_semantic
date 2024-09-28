@@ -25,12 +25,14 @@
 #include "Atlas.h"
 #include "ORBVocabulary.h"
 #include "Tracking.h"
+#include "LoopQuery.h"
 
 #include "KeyFrameDatabase.h"
 
 #include <boost/algorithm/string.hpp>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 #include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
 
 namespace ORB_SLAM3
@@ -44,6 +46,9 @@ class Map;
 
 class LoopClosing
 {
+private:
+    queue<LoopQuery>* lc_buf_;
+    condition_variable* lc_cv_;
 public:
 
     typedef pair<set<KeyFrame*>,int> ConsistentGroup;    
@@ -77,6 +82,8 @@ public:
         unique_lock<std::mutex> lock(mMutexGBA);
         return mbFinishedGBA;
     }   
+
+    void registerLoopCall(queue<LoopQuery>* lc_buf, condition_variable* cv);
 
     void RequestFinish();
 

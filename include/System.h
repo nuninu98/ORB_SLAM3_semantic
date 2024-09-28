@@ -40,6 +40,7 @@
 #include "Viewer.h"
 #include "ImuTypes.h"
 #include "Settings.h"
+#include "LoopQuery.h"
 
 
 namespace ORB_SLAM3
@@ -177,7 +178,7 @@ public:
     int GetTrackingState();
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
-
+    
     // For debugging
     double GetTimeFromIMUInit();
     bool isLost();
@@ -187,13 +188,14 @@ public:
 
     float GetImageScale();
 
+    vector<KeyFrame*> getKeyFrames();
 #ifdef REGISTER_TIMES
     void InsertRectTime(double& time);
     void InsertResizeTime(double& time);
     void InsertTrackTime(double& time);
 #endif
 
-    void registerKeyframeCall(bool* kf_flag ,condition_variable* kf_cv);
+    void registerKeyframeCall(bool* kf_flag ,condition_variable* kf_cv, queue<LoopQuery>* lc_buf = nullptr);
 
     KeyFrame* getLastKF() const;
 private:

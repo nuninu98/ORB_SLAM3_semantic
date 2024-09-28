@@ -36,7 +36,7 @@ LoopClosing::LoopClosing(Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pV
     mbResetRequested(false), mbResetActiveMapRequested(false), mbFinishRequested(false), mbFinished(true), mpAtlas(pAtlas),
     mpKeyFrameDB(pDB), mpORBVocabulary(pVoc), mpMatchedKF(NULL), mLastLoopKFid(0), mbRunningGBA(false), mbFinishedGBA(true),
     mbStopGBA(false), mpThreadGBA(NULL), mbFixScale(bFixScale), mnFullBAIdx(0), mnLoopNumCoincidences(0), mnMergeNumCoincidences(0),
-    mbLoopDetected(false), mbMergeDetected(false), mnLoopNumNotFound(0), mnMergeNumNotFound(0), mbActiveLC(bActiveLC)
+    mbLoopDetected(false), mbMergeDetected(false), mnLoopNumNotFound(0), mnMergeNumNotFound(0), mbActiveLC(bActiveLC), lc_buf_(nullptr), lc_cv_(nullptr)
 {
     mnCovisibilityConsistencyTh = 3;
     mpLastCurrentKF = static_cast<KeyFrame*>(NULL);
@@ -84,6 +84,11 @@ void LoopClosing::SetTracker(Tracking *pTracker)
 void LoopClosing::SetLocalMapper(LocalMapping *pLocalMapper)
 {
     mpLocalMapper=pLocalMapper;
+}
+
+void LoopClosing::registerLoopCall(queue<LoopQuery>* lc_buf, condition_variable* cv){
+    lc_buf_ = lc_buf;
+    lc_cv_ = cv;
 }
 
 
@@ -271,7 +276,17 @@ void LoopClosing::Run()
                         nLoop += 1;
 
 #endif
-                        CorrectLoop();
+                        if(lc_buf_ != nullptr && lc_cv_ != nullptr){
+                            Sophus::SE3d correctedTcw(mg2oLoopScw.rotation(),mg2oLoopScw.translation() / mg2oLoopScw.scale());
+                            Sophus::SE3d targetKFTcw = mpLoopMatchedKF->GetPose().cast<double>();
+                            auto drift = targetKFTcw * correctedTcw.inverse();
+                            LoopQuery lq(mpCurrentKF->mnId, mpLoopMatchedKF->mnId, drift.matrix().cast<float>());
+                            lc_buf_->push(lq);
+                            lc_cv_->notify_all();
+                            // cout<<"DRIFT:\n"<<drift.matrix()<<endl;
+                            
+                        }
+                        //CorrectLoop();
 #ifdef REGISTER_TIMES
                         std::chrono::steady_clock::time_point time_EndLoop = std::chrono::steady_clock::now();
 

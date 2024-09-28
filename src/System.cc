@@ -1546,12 +1546,20 @@ string System::CalculateCheckSum(string filename, int type)
     return checksum;
 }
 
-    void System::registerKeyframeCall(bool* kf_flag, condition_variable* kf_cv){
+    void System::registerKeyframeCall(bool* kf_flag, condition_variable* kf_cv, queue<LoopQuery>* lc_buf){
         mpTracker->registerKeyframeCall(kf_flag, kf_cv);
+        mpLoopCloser->registerLoopCall(lc_buf, kf_cv);
     }
 
     KeyFrame* System::getLastKF() const{
         return mpTracker->GetLastKeyFrame();
+    }
+
+    vector<KeyFrame*> System::getKeyFrames(){
+        vector<KeyFrame*> output;
+        output = mpAtlas->GetAllKeyFrames();
+        
+        return output;
     }
 
 } //namespace ORB_SLAM

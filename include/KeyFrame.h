@@ -193,6 +193,9 @@ class KeyFrame
     }
 
 public:
+    //========Debug=====
+    //cv::Mat color_, depth_;
+    //===================
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     KeyFrame();
     KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB);
