@@ -47,8 +47,10 @@ class Map;
 class LoopClosing
 {
 private:
+    mutex* lq_lock_;
     queue<LoopQuery>* lc_buf_;
     condition_variable* lc_cv_;
+    std::vector<pair<float, size_t>> candidates_;
 public:
 
     typedef pair<set<KeyFrame*>,int> ConsistentGroup;    
@@ -83,7 +85,7 @@ public:
         return mbFinishedGBA;
     }   
 
-    void registerLoopCall(queue<LoopQuery>* lc_buf, condition_variable* cv);
+    void registerLoopCall(queue<LoopQuery>* lc_buf, condition_variable* cv, mutex* loop_mtx);
 
     void RequestFinish();
 

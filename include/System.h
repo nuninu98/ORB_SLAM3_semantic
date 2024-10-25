@@ -195,8 +195,9 @@ public:
     void InsertTrackTime(double& time);
 #endif
 
-    void registerKeyframeCall(bool* kf_flag ,condition_variable* kf_cv, queue<LoopQuery>* lc_buf = nullptr);
+    void registerKeyframeCall(bool* kf_flag ,condition_variable* kf_cv);
 
+    void registerLoopCall(queue<LoopQuery>* lc_buf, condition_variable* cv, mutex* loop_mtx);
     KeyFrame* getLastKF() const;
 private:
 

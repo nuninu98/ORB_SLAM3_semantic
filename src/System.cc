@@ -1546,10 +1546,14 @@ string System::CalculateCheckSum(string filename, int type)
     return checksum;
 }
 
-    void System::registerKeyframeCall(bool* kf_flag, condition_variable* kf_cv, queue<LoopQuery>* lc_buf){
-        mpTracker->registerKeyframeCall(kf_flag, kf_cv);
-        mpLoopCloser->registerLoopCall(lc_buf, kf_cv);
+    void System::registerKeyframeCall(bool* kf_flag, condition_variable* kf_cv){
+        mpTracker->registerKeyframeCall(kf_flag, kf_cv);   
     }
+
+    void System::registerLoopCall(queue<LoopQuery>* lc_buf, condition_variable* cv, mutex* loop_mtx){
+        mpLoopCloser->registerLoopCall(lc_buf, cv, loop_mtx);
+    }
+
 
     KeyFrame* System::getLastKF() const{
         return mpTracker->GetLastKeyFrame();
